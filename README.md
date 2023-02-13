@@ -59,7 +59,7 @@ The `inDataDir` in the `nextflow.config` file would point to the `data/` directo
 Output directories are specified in the `nextflow.config` file under `outDataDir` and `outTrioDir`. The `outDataDir` contains primarily BAM and SAM files while the `outTrioDir` contains the variant call sheets.
 
 ## Other notes
-Since this pipeline runs off Nextflow, it comes with some nice functionalities such as the ability to resume runs. This is done by adding the `--resume` flag after the `nextflow run` command. This is useful in cases where the pipeline ran out of time on the cluster or if you forgot some sort of input file (though I did my best on input file checking before processing). If you need to do this, make sure to not delete the `work` directory that is created. It is a temporary directory created by the pipeline and acts as a cache to allow for the resuming of the workflow.
+Since this pipeline runs off Nextflow, it comes with some nice functionalities such as the ability to resume runs. This is done by adding the `-resume` flag after the `nextflow run` command. This is useful in cases where the pipeline ran out of time on the cluster or if you forgot some sort of input file (though I did my best on input file checking before processing). If you need to do this, make sure to not delete the `work` directory that is created. It is a temporary directory created by the pipeline and acts as a cache to allow for the resuming of the workflow.
 
 The `nextflow.config` file is very flexible and it is easy to adjust directory paths and resource allocations. Do not feel limited by the default directory locations. These merely act as a starting point for working with this workflow.
 

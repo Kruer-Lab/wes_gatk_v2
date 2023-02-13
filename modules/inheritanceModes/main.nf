@@ -102,8 +102,8 @@ process HOMOZYGOUS_RECESSIVE {
     publishDir "${params.outTrioDir}/${family}", pattern: "*.hom.cadd.metasvm.rare.vcf", mode: 'copy'
 
     input:
-        tuple val(family), path(pedigree), path(snpSelect)
-        tuple val(family), path(pedigree), path(indelSelect)
+        tuple val(family), path(pedigree1), path(snpSelect)
+        tuple val(family), path(pedigree2), path(indelSelect)
         path refGenome
         path refIndex
 
@@ -145,7 +145,7 @@ process HOMOZYGOUS_RECESSIVE {
     uniq -f 7 ${family}.hom.cadd.metasvm.rare.0.vcf > ${family}.hom.cadd.metasvm.rare.00.vcf
 
     # Remove homozygous variants in chrX if the proband is male
-    SEX=\$(cat $pedigree | awk -v samp="${family}-003-A" '\$2 == samp {print}' | cut -f5 )
+    SEX=\$(cat $pedigree1 | awk -v samp="${family}-003-A" '\$2 == samp {print}' | cut -f5 )
 
     if [[ \$SEX == 1 ]]; then	
 	    awk '\$1 != "chrX" {print}' ${family}.hom.cadd.metasvm.rare.00.vcf > temp && mv temp ${family}.hom.cadd.metasvm.rare.vcf
