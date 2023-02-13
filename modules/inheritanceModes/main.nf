@@ -156,7 +156,7 @@ process HOMOZYGOUS_RECESSIVE {
 }
 
 process COMPOUND_HETEROZYGOUS {
-    label = 'medium'
+    label = 'long'
 
     publishDir "${params.outTrioDir}/${family}", pattern: "*.comphet.cadd.metasvm.rare.vcf", mode: 'copy'
 
@@ -271,7 +271,7 @@ process X_LINKED_RECESSIVE {
 }
 
 process DOMINANT {
-    label = 'gatk'
+    label = 'long'
 
     publishDir "${params.outTrioDir}/${family}", pattern: "*.dom.cadd.metasvm.rare.vcf", mode: 'copy'
 

@@ -1,5 +1,5 @@
 process BQSR {
-    label 'gatk'
+    label 'medium'
 
     publishDir "${params.outDataDir}/${sample}", mode: 'copy'
 
@@ -25,7 +25,7 @@ process BQSR {
 }
 
 process HAPLOTYPE_CALLER {
-    label 'gatk'
+    label 'medium'
     
     publishDir "${params.outDataDir}/${sample}", mode: 'copy'
 
@@ -47,7 +47,7 @@ process HAPLOTYPE_CALLER {
 }
 
 process COMBINE_AND_GENOTYPE_GVCFS {
-    label = 'gatk'
+    label = 'medium'
 
     publishDir "${params.outTrioDir}/${family}", mode: 'copy'
 

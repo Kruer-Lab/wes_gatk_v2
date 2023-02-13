@@ -1,5 +1,5 @@
 process PICARD_ADD_REPLACE_READ_GROUPS {
-    label 'medium'
+    label 'picard'
 
     publishDir "${params.outDataDir}/${sample}", mode: 'copy'
 
@@ -22,7 +22,7 @@ process PICARD_ADD_REPLACE_READ_GROUPS {
 }
 
 process PICARD_MARK_DUPLICATES {
-    label 'medium'
+    label 'picard'
     
     publishDir "${params.outDataDir}/${sample}", mode: 'copy'
 

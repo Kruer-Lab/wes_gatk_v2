@@ -7,4 +7,4 @@
 module load singularity/3.8.0
 source activate wes_gatk_v2
 
-nextflow run main.nf -profile cluster
+nextflow run main.nf -profile cluster -with-report

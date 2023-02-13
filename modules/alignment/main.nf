@@ -19,7 +19,7 @@ process INDEX_REFERENCE {
 }
 
 process BWA_MEM {
-    label 'long'
+    label 'alignment'
 
     publishDir "${params.outDataDir}/${sample}", mode: 'copy'
  
