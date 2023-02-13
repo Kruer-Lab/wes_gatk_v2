@@ -1,0 +1,371 @@
+
+ ------------------------------------------------------------------------------
+|   Another GFF Analysis Toolkit (AGAT) - Version: v1.0.0                      |
+|   https://github.com/NBISweden/AGAT                                          |
+|   National Bioinformatics Infrastructure Sweden (NBIS) - www.nbis.se         |
+ ------------------------------------------------------------------------------
+                            11/02/2022 at 21h39m37s                             
+
+********************************************************************************
+*                              - Start parsing -                               *
+********************************************************************************
+-------------------------- parse options and metadata --------------------------
+=> Accessing the feature_levels YAML file
+Using standard /home/sheetalshetty/anaconda3/lib/perl5/site_perl/auto/share/dist/AGAT/feature_levels.yaml file
+=> Attribute used to group features when no Parent/ID relationship exists (i.e common tag):
+	* locus_tag
+	* gene_id
+=> merge_loci option deactivated
+=> Machine information:
+	This script is being run by perl v5.32.1
+	Bioperl location being used: /home/sheetalshetty/anaconda3/lib/perl5/site_perl/Bio/
+	Operating system being used: linux 
+=> Accessing Ontology
+	No ontology accessible from the gff file header!
+	We use the SOFA ontology distributed with AGAT:
+		/home/sheetalshetty/anaconda3/lib/perl5/site_perl/auto/share/dist/AGAT/so.obo
+	Read ontology /home/sheetalshetty/anaconda3/lib/perl5/site_perl/auto/share/dist/AGAT/so.obo:
+		4 root terms, and 2596 total terms, and 1516 leaf terms
+	Filtering ontology:
+The feature type (3rd column) is constrained to be either a term from the Sequence Ontology or an SO accession number. The latter alternative is distinguished using the syntax SO:000000. In either case, it must be sequence_feature (SO:0000110) or an is_a child of it.
+We filter the ontology to apply this rule.		We found 1861 terms that are sequence_feature or is_a child of it.
+--------------------------------- parsing file ---------------------------------
+=> Number of line in file: 1993323
+=> Number of comment lines: 31
+=> Fasta included: No
+=> Number of features lines: 1993292
+=> Number of feature type (3rd column): 9
+	* Level1: 1 => gene
+	* level2: 1 => transcript
+	* level3: 6 => three_prime_UTR exon stop_codon five_prime_UTR start_codon CDS
+	* unknown: 1 => stop_codon_redefined_as_selenocysteine
+=> Version of the Bioperl GFF parser selected by AGAT: 3
+gff3 reader warning: primary_tag error @ stop_codon_redefined_as_selenocysteine still not taken into account! Please modify the feature_levels YAML file to define the feature in one of the levels.
+gff3 reader warning: primary_tag error @ stop_codon_redefined_as_selenocysteine still not taken into account! Please modify the feature_levels YAML file to define the feature in one of the levels.
+gff3 reader warning: primary_tag error @ stop_codon_redefined_as_selenocysteine still not taken into account! Please modify the feature_levels YAML file to define the feature in one of the levels.
+gff3 reader warning: primary_tag error @ stop_codon_redefined_as_selenocysteine still not taken into account! Please modify the feature_levels YAML file to define the feature in one of the levels.
+gff3 reader warning: primary_tag error @ stop_codon_redefined_as_selenocysteine still not taken into account! Please modify the feature_levels YAML file to define the feature in one of the levels.
+gff3 reader warning: primary_tag error @ stop_codon_redefined_as_selenocysteine still not taken into account! Please modify the feature_levels YAML file to define the feature in one of the levels.
+gff3 reader warning: primary_tag error @ stop_codon_redefined_as_selenocysteine still not taken into account! Please modify the feature_levels YAML file to define the feature in one of the levels.
+gff3 reader warning: primary_tag error @ stop_codon_redefined_as_selenocysteine still not taken into account! Please modify the feature_levels YAML file to define the feature in one of the levels.
+gff3 reader warning: primary_tag error @ stop_codon_redefined_as_selenocysteine still not taken into account! Please modify the feature_levels YAML file to define the feature in one of the levels.
+gff3 reader warning: primary_tag error @ stop_codon_redefined_as_selenocysteine still not taken into account! Please modify the feature_levels YAML file to define the feature in one of the levels.
+gff3 reader warning: primary_tag error  ************** Too much WARNING message we skip the next **************
+101 warning messages: gff3 reader warning: primary_tag error 
+********************************************************************************
+*                               - End parsing -                                *
+*                             done in 404 seconds                              *
+********************************************************************************
+
+********************************************************************************
+*                               - Start checks -                               *
+********************************************************************************
+---------------------------- Check1: feature types -----------------------------
+----------------------------------- ontology -----------------------------------
+All feature types in agreement with the Ontology.
+------------------------------------- agat -------------------------------------
+WARNING - Feature types not expected by AGAT:
+* stop_codon_redefined_as_selenocysteine
+The feature of these types (3rd column in GFF3) are skipped by the parser!
+To take them into account you must update the feature_levels YAML file. To acces
+s this file run:
+			agat levels --expose
+In which file to add my feature?
+* Feature level1 (e.g. gene, match, region):
+  My feature has no parent
+  => level1 section.
+* Feature level2 (e.g. mrna, match_part, trna):
+  My feature has one parent and children
+  => level2 section.
+* Feature level3 (e.g. exon, intron, cds):
+  My feature has one parent (the parent has also a parent) and no children
+  => level3 section.
+* Feature level3 discontinuous (e.g. cds, utr):
+  A single feature that exists over multiple genomic locations
+  => spread section.
+------------------------------ done in 0 seconds -------------------------------
+
+------------------------------ Check2: duplicates ------------------------------
+None found
+------------------------------ done in 0 seconds -------------------------------
+
+-------------------------- Check3: sequential bucket ---------------------------
+Locus ensg00000205755.12 interleaved
+Locus ensg00000275287.5 interleaved
+Locus ensg00000178605.14 interleaved
+Locus ensg00000230542.6 interleaved
+Locus ensg00000270726.6 interleaved
+Locus ensg00000226179.6 interleaved
+Locus ensg00000228410.6 interleaved
+Locus ensg00000236871.7 interleaved
+Locus ensg00000124333.16 interleaved
+Locus ensg00000229232.6 interleaved
+Locus ensg00000002586.20 interleaved
+Locus ensg00000196433.13 interleaved
+Locus ensg00000223274.6 interleaved
+Locus ensg00000277120.5 interleaved
+Locus ensg00000223484.7 interleaved
+Locus ensg00000227159.8 interleaved
+Locus ensg00000124334.18 interleaved
+Locus ensg00000223773.10 interleaved
+Locus ensg00000228572.7 interleaved
+Locus ensg00000182484.15 interleaved
+Locus ensg00000185291.12 interleaved
+Locus ensg00000198223.18 interleaved
+Locus ensg00000265658.6 interleaved
+Locus ensg00000237801.6 interleaved
+Locus ensg00000185960.15 interleaved
+Locus ensg00000223571.6 interleaved
+Locus ensg00000237040.6 interleaved
+Locus ensg00000234622.6 interleaved
+Locus ensg00000182378.15 interleaved
+Locus ensg00000280767.3 interleaved
+Locus ensg00000225661.7 interleaved
+Locus ensg00000182162.11 interleaved
+Locus ensg00000289007.2 interleaved
+Locus ensg00000281849.3 interleaved
+Locus ensg00000197976.12 interleaved
+Locus ensg00000236017.8 interleaved
+Locus ensg00000289620.2 interleaved
+Locus ensg00000237531.6 interleaved
+Locus ensg00000214717.12 interleaved
+Locus ensg00000169100.14 interleaved
+Locus ensg00000169093.16 interleaved
+Locus ensg00000169084.15 interleaved
+Locus ensg00000185203.12 interleaved
+Locus ensg00000167393.18 interleaved
+Locus ensg00000291040.1 interleaved
+Locus ensg00000223511.7 interleaved
+Locus ensg00000234958.6 interleaved
+47 cases of interleaved locus. ( Features of the locus data are defined earlier in the file.
+None found
+------------------------------ done in 6 seconds -------------------------------
+
+--------------------------- Check4: l2 linked to l3 ----------------------------
+No problem found
+------------------------------ done in 2 seconds -------------------------------
+
+--------------------------- Check5: l1 linked to l2 ----------------------------
+No problem found
+------------------------------ done in 0 seconds -------------------------------
+
+--------------------------- Check6: remove orphan l1 ---------------------------
+We remove only those not supposed to be orphan
+None found
+------------------------------ done in 0 seconds -------------------------------
+
+------------------------- Check7: all level3 locations -------------------------
+------------------------------ done in 30 seconds ------------------------------
+
+------------------------------ Check8: check cds -------------------------------
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+Stop codon split over exons
+No problem found
+------------------------------ done in 5 seconds -------------------------------
+
+----------------------------- Check9: check exons ------------------------------
+No exons created
+No exons locations modified
+No supernumerary exons removed
+No level2 locations modified
+------------------------------ done in 43 seconds ------------------------------
+
+----------------------------- Check10: check utrs ------------------------------
+No UTRs created
+No UTRs locations modified
+No supernumerary UTRs removed
+------------------------------ done in 21 seconds ------------------------------
+
+------------------------ Check11: all level2 locations -------------------------
+No problem found
+------------------------------ done in 33 seconds ------------------------------
+
+------------------------ Check12: all level1 locations -------------------------
+We fixed 9826 wrong level1 location cases
+------------------------------ done in 2 seconds -------------------------------
+
+---------------------- Check13: remove identical isoforms ----------------------
+Lets remove isoform ENST00000681489.1
+Lets remove isoform ENST00000672287.2
+Lets remove isoform ENST00000691462.1
+Lets remove isoform ENST00000673044.1
+Lets remove isoform ENST00000620688.2
+Lets remove isoform ENST00000619060.1
+Lets remove isoform ENST00000672699.1
+Lets remove isoform ENST00000432560.6
+Lets remove isoform ENST00000693090.1
+Lets remove isoform ENST00000688656.1
+Lets remove isoform ENST00000675428.1
+Lets remove isoform ENST00000678269.1
+Lets remove isoform ENST00000552002.7
+Lets remove isoform ENST00000705985.1
+Lets remove isoform ENST00000673324.1
+Lets remove isoform ENST00000650107.1
+Lets remove isoform ENST00000704744.1
+Lets remove isoform ENST00000645462.1
+Lets remove isoform ENST00000678578.1
+19 identical isoforms removed
+------------------------------ done in 13 seconds ------------------------------
+********************************************************************************
+*                                - End checks -                                *
+*                             done in 155 seconds                              *
+********************************************************************************
+
+=> OmniscientI total time: 559 seconds

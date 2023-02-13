@@ -1,0 +1,7 @@
+name: wes_gatk_v2
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - nextflow=22.10.4=h4a94de4_0

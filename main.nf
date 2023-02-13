@@ -1,0 +1,177 @@
+nextflow.enable.dsl=2
+
+include { CALL_VARIANTS as CALL_VAR_M } from './subworkflows/call_variants'
+include { CALL_VARIANTS as CALL_VAR_F } from './subworkflows/call_variants'
+include { CALL_VARIANTS as CALL_VAR_C1 } from './subworkflows/call_variants'
+include { CALL_VARIANTS as CALL_VAR_C2 } from './subworkflows/call_variants'
+include { GENE_FILTERING } from './subworkflows/gene_filtering'
+
+
+workflow {
+
+    // Ensure sample sheet has complete trios
+    def sheet = file(params.samplesheet, checkIfExists: true).readLines()*.split('\t') // Import sample sheet as .tsv
+    sheet.remove(0) // Remove header
+
+    def sheetFamilies = []
+    for(line : sheet) {
+        if(line.size() < 3) {
+            error("ERROR: Sample sheet has incomplete trios.")
+        }
+        sheetFamilies.add((line[0] =~ /(\D\d{3,})-\d{3}-\D/).findAll()[0][1]) // Get family IDs
+    }
+
+    // Get family IDs for files in pedigree directory
+    def pedDir = file(params.pedigreeDir).list()
+    def pedDirFams = []
+    for(item : pedDir) {
+        if(item.endsWith(".ped")) {
+            tmp = (item =~ /(\D\d{3,})-\d{3}-\D|\D\d{3,}/).findAll()[0].sort() - null
+            pedDirFams.add(tmp.get(0))
+        }
+    }
+
+    // Error if no pedigrees are found
+    if(pedDirFams.size() == 0) {
+        error("ERROR: No pedigree families found.")
+    }
+    
+    // Check pedigree directory for duplicates
+    if(pedDirFams.toSet().size() != pedDirFams.size()) {
+        error("ERROR: Duplicate sample pedigrees in pedigree directory.")
+    }
+
+    // Check for sample sheet families in pedigree families
+    for(fam : sheetFamilies) {
+        if(!pedDirFams.contains(fam)) {
+            error("ERROR: Pedigree not found for " + fam)
+        }
+    }
+
+    // Import sample sheet and get reads
+    // Get mother samples
+    Channel
+        .fromPath(params.samplesheet, checkIfExists: true)
+        .ifEmpty{exit 1, "No sample sheet found at $params.samplesheet"}
+        .splitCsv(header: true, sep: "\t", strip: true)
+        .map{row ->
+            // Get sample ID (letter, 3 or more digits, -, 3 digits, -, letter)
+            def sampleID = (row.Mother =~ /\D\d{3,}-\d{3}-\D/).findAll()[0]
+
+            // Get family ID ("F" number)
+            def familyID = sampleID.substring(0, sampleID.indexOf("-"))
+
+            def r1 = file("$params.inDataDir/${row.Mother}/*_R1_*.fastq.gz", checkIfExists: true)
+            def r2 = file("$params.inDataDir/${row.Mother}/*_R2_*.fastq.gz", checkIfExists: true)
+
+            // Ensure only one file is used for each read
+            if(r1.size() != 1 || r2.size != 1) {
+                error "Incorrect number of reads in ${row.Mother}"
+            }
+
+            return tuple(familyID, sampleID, r1, r2)
+        }
+        .set{read_pairs_mother}
+
+    // Get father samples
+    Channel
+        .fromPath(params.samplesheet, checkIfExists: true)
+        .ifEmpty{exit 1, "No sample sheet found at $params.samplesheet"}
+        .splitCsv(header: true, sep: "\t", strip: true)
+        .map{row ->
+            // Get sample ID (letter, 3 or more digits, -, 3 digits, -, letter)
+            def sampleID = (row.Father =~ /\D\d{3,}-\d{3}-\D/).findAll()[0]
+
+            // Get family ID ("F" number)
+            def familyID = sampleID.substring(0, sampleID.indexOf("-"))
+
+            def r1 = file("$params.inDataDir/${row.Father}/*_R1_*.fastq.gz", checkIfExists: true)
+            def r2 = file("$params.inDataDir/${row.Father}/*_R2_*.fastq.gz", checkIfExists: true)
+
+            // Ensure only one file is used for each read
+            if(r1.size() != 1 || r2.size != 1) {
+                error "Incorrect number of reads in ${row.Father}"
+            }
+
+            return tuple(familyID, sampleID, r1, r2)
+        }
+        .set{read_pairs_father}
+
+    // Get affected child samples
+    Channel
+        .fromPath(params.samplesheet, checkIfExists: true)
+        .ifEmpty{exit 1, "No sample sheet found at $params.samplesheet"}
+        .splitCsv(header: true, sep: "\t", strip: true)
+        .map{row ->
+            // Get sample ID (letter, 3 or more digits, -, 3 digits, -, letter)
+            def sampleID = (row.Child_Affected =~ /\D\d{3,}-\d{3}-\D/).findAll()[0]
+
+            // Get family ID ("F" number)
+            def familyID = sampleID.substring(0, sampleID.indexOf("-"))
+
+            def r1 = file("$params.inDataDir/${row.Child_Affected}/*_R1_*.fastq.gz", checkIfExists: true)
+            def r2 = file("$params.inDataDir/${row.Child_Affected}/*_R2_*.fastq.gz", checkIfExists: true)
+
+            // Ensure only one file is used for each read
+            if(r1.size() != 1 || r2.size != 1) {
+                error "Incorrect number of reads in ${row.Child_Affected}"
+            }
+
+            return tuple(familyID, sampleID, r1, r2)
+        }
+        .set{read_pairs_child_affected}
+
+    // Get second child samples for quads (if any)
+    Channel
+        .fromPath(params.samplesheet, checkIfExists: true)
+        .ifEmpty{exit 1, "No sample sheet found at $params.samplesheet"}
+        .splitCsv(header: true, sep: "\t", strip: true)
+        .map{row ->
+            if(row.Child_Other) {
+                // Get sample ID (letter, 3 or more digits, -, 3 digits, -, letter)
+                def sampleID = (row.Child_Other =~ /\D\d{3,}-\d{3}-\D/).findAll()[0]
+
+                // Get family ID ("F" number)
+                def familyID = sampleID.substring(0, sampleID.indexOf("-"))
+
+                def r1 = file("$params.inDataDir/${row.Child_Other}/*_R1_*.fastq.gz", checkIfExists: true)
+                def r2 = file("$params.inDataDir/${row.Child_Other}/*_R2_*.fastq.gz", checkIfExists: true)
+
+                // Ensure only one file is used for each read
+                if(r1.size() != 1 || r2.size != 1) {
+                    error "Incorrect number of reads in ${row.Child_Other}"
+                }
+
+                return tuple(familyID, sampleID, r1, r2)
+            }
+        }
+        .set{read_pairs_child_other}
+
+        // Get pedigrees
+        Channel
+        .fromPath("$params.pedigreeDir/*.ped", checkIfExists: true)
+        .ifEmpty{exit 1, "No pedigrees found in $params.pedigreeDir"}
+        .map{file ->
+            // Get family ID (letter, 3 or more digits, -, 3 digits, -, letter (capture group gets just the 'F' number))
+            // Alternatively will get family names with just the F### number
+            def idRegex = (file =~ /(\D\d{3,})-\d{3}-\D|\D\d{3,}/).findAll()[0].sort() - null
+            def familyID = idRegex.get(0)
+            return tuple(familyID, file)
+        }
+        .set{pedigrees}
+
+
+    // Run everything up to HaplotypeCaller
+    CALL_VAR_M(read_pairs_mother)
+    CALL_VAR_F(read_pairs_father)
+    CALL_VAR_C1(read_pairs_child_affected)
+    CALL_VAR_C2(read_pairs_child_other)
+
+    // Variant filtration
+    GENE_FILTERING(CALL_VAR_M.out.rawGVCF,
+                    CALL_VAR_F.out.rawGVCF,
+                    CALL_VAR_C1.out.rawGVCF,
+                    pedigrees)
+
+
+}
