@@ -58,7 +58,7 @@ process DENOVO_INDELS {
         path refIndex
 
     output:
-        tuple val(family), path(pedigree), path("${family}.indel.denovo.intersect.vcf"), emit: denovoIntersectVCF
+        tuple val(family), path("${family}.indel.denovo.intersect.vcf"), emit: denovoIntersectVCF
         tuple val(family), path("${family}.indel.select.vcf"), emit: indelSelectVCF
         
     script:
@@ -179,7 +179,7 @@ process COMPOUND_HETEROZYGOUS {
     perl \$ANNOVAR/table_annovar.pl  ${family}.merged.filt.vcf  ${params.resourcesDir}/Annovar/humandb/  -buildver hg38 -out ${family}.merged -remove -protocol refGene,cytoBand,esp6500siv2_all,ALL.sites.2015_08,ljb26_all,exac03,dbnsfp42c,revel,intervar_20180118,cadd16all,bravo_v8,clinvar_20220320,gnomad30_genome -operation g,r,f,f,f,f,f,f,f,f,f,f,f -nastring . -vcfinput
 
     # Select columns: CHR, POS, REF, and gene name
-    vcf-query -f '%CHROM:%POS %REF %ALT %INFO/{Gene.refGene}\\n' ${family}.merged.hg38_multianno.vcf > ${family}.merged.genes.vcf
+    vcf-query -f '%CHROM:%POS %REF %ALT %INFO/Gene.refGene\\n' ${family}.merged.hg38_multianno.vcf > ${family}.merged.genes.vcf
     gatk --java-options "-Xmx${gatkMemory}g" VariantsToTable -V ${family}.merged.hg38_multianno.vcf -F CHROM -F POS -F REF -F ALT -F Gene.refGene -F HET -F HOM-REF -GF GT  -O ${family}.merged.genes.table
 
     # Move gene name column to the last column
@@ -220,7 +220,7 @@ process COMPOUND_HETEROZYGOUS {
     # Remove duplicate variants
     gatk --java-options "-Xmx${gatkMemory}g" VariantFiltration -R $refGenome -V ${family}.comphet.cadd.metasvm.vcf  -filter "(vc.getAttributeAsString('bravo_freeze8', null).equals('.') || vc.getAttributeAsDouble('bravo_freeze8', 0) < $params.MAF_REC) && (vc.getAttributeAsString('AF', null).equals('.') || vc.getAttributeAsDouble('AF', 0) < $params.MAF_REC)" --filter-name "Rare" -O  ${family}.comphet.cadd.metasvm.varfilt.vcf
     gatk --java-options "-Xmx${gatkMemory}g" SelectVariants -R $refGenome -V ${family}.comphet.cadd.metasvm.varfilt.vcf -select 'FILTER =~ Rare' -O ${family}.comphet.cadd.metasvm.rare.0.vcf
-    uniq -f 7 ${TRIO}.comphet.cadd.metasvm.rare.0.vcf > ${family}.comphet.cadd.metasvm.rare.vcf
+    uniq -f 7 ${family}.comphet.cadd.metasvm.rare.0.vcf > ${family}.comphet.cadd.metasvm.rare.vcf
     """
 }
 
@@ -324,7 +324,7 @@ process VARIANTS_TO_TABLE {
     publishDir "${params.outTrioDir}/${family}/Excel_Tables/", mode: 'copy'
 
     input:
-        tuple val(family), path(snp_in)
+        tuple val(family), path(pedigree), path(snp_in)
         tuple val(family), path(indel_in)
         tuple val(family), path(hom_recessive_in)
         tuple val(family), path(comp_het_in)
