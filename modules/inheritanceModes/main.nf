@@ -126,7 +126,7 @@ process HOMOZYGOUS_RECESSIVE {
     perl \$ANNOVAR/table_annovar.pl  ${family}.hom.filt.vcf  ${params.resourcesDir}/Annovar/humandb/  -buildver hg38 -out ${family}.hom -remove -protocol refGene,cytoBand,esp6500siv2_all,ALL.sites.2015_08,ljb26_all,exac03,dbnsfp42c,revel,intervar_20180118,cadd16all,bravo_v8,clinvar_20220320,gnomad30_genome -operation g,r,f,f,f,f,f,f,f,f,f,f,f -nastring . -vcfinput
 
     # Filter homozygous variants to find MetaSVM deleterious variants
-    more ${family}.hom.hg38_multianno.vcf | egrep 'RadialSVM_pred=D|ExonicFunc.refGene=stop|ExonicFunc.refGene=start|frameshift|deleteion|insertion|splicing|#' | egrep -v 'Func.refGene=intronic|Func.refGene=UTR3|Func.refGene=UTR5|Func.refGene=intergenic|Func.refGene=ncRNA|Func.refGene=downstream|Func.refGene=upstream' > ${family}.hom.metasvm.lof.vcf
+    more ${family}.hom.hg38_multianno.vcf | egrep 'RadialSVM_pred=D|ExonicFunc.refGene=stop|ExonicFunc.refGene=start|frameshift|deletion|insertion|splicing|#' | egrep -v 'Func.refGene=intronic|Func.refGene=UTR3|Func.refGene=UTR5|Func.refGene=intergenic|Func.refGene=ncRNA|Func.refGene=downstream|Func.refGene=upstream' > ${family}.hom.metasvm.lof.vcf
 
     # Filter homozygous variants to find CADD deleterious variants
     gatk --java-options "-Xmx${gatkMemory}g"  VariantFiltration -R $refGenome -V ${family}.hom.hg38_multianno.vcf  -filter "vc.getAttributeAsDouble('cadd16_phred', 0) > $params.CADD_THR" --filter-name "High_CADD" -O  ${family}.hom.cadd.varfilt.vcf
@@ -204,7 +204,7 @@ process COMPOUND_HETEROZYGOUS {
 
     # Select the rows in the original annotated VCF file that have the derived chromosomal positions derived for the comp het variants
     vcftools --vcf ${family}.merged.hg38_multianno.vcf --positions ${family}.positions.tsv --recode  --recode-INFO-all --out ${family}.comphet
-    more ${family}.comphet.recode.vcf | egrep 'RadialSVM_pred=D|ExonicFunc.refGene=stop|ExonicFunc.refGene=start|frameshift|deleteion|insertion|splicing|#' | egrep -v 'Func.refGene=intronic|Func.refGene=UTR3|Func.refGene=UTR5|Func.refGene=intergenic|Func.refGene=ncRNA|Func.refGene=downstream|Func.refGene=upstream|ExonicFunc.refGene=synonymous'> ${family}.comphet.metasvm.lof.vcf
+    more ${family}.comphet.recode.vcf | egrep 'RadialSVM_pred=D|ExonicFunc.refGene=stop|ExonicFunc.refGene=start|frameshift|deletion|insertion|splicing|#' | egrep -v 'Func.refGene=intronic|Func.refGene=UTR3|Func.refGene=UTR5|Func.refGene=intergenic|Func.refGene=ncRNA|Func.refGene=downstream|Func.refGene=upstream|ExonicFunc.refGene=synonymous'> ${family}.comphet.metasvm.lof.vcf
 
     # Filter compound het variants using GATK VariantFiltration to find CADD deleterious variants
     gatk --java-options "-Xmx${gatkMemory}g" VariantFiltration -R $refGenome -V ${family}.comphet.recode.vcf  -filter "vc.getAttributeAsDouble('cadd16_phred', 0) > $params.CADD_THR " --filter-name "High_CADD" -O  ${family}.comphet.cadd.varfilt.vcf
@@ -249,7 +249,7 @@ process X_LINKED_RECESSIVE {
     perl \$ANNOVAR/table_annovar.pl  ${family}.xlink.filt.vcf  ${params.resourcesDir}/Annovar/humandb/  -buildver hg38 -out ${family}.xlink -remove -protocol refGene,cytoBand,esp6500siv2_all,ALL.sites.2015_08,ljb26_all,exac03,dbnsfp42c,revel,intervar_20180118,cadd16all,bravo_v8,clinvar_20220320,gnomad30_genome -operation g,r,f,f,f,f,f,f,f,f,f,f,f -nastring . -vcfinput
 
     # Filter X-Linked variants to find MetaSVM deleterious variants
-    more ${family}.xlink.hg38_multianno.vcf | egrep 'RadialSVM_pred=D|ExonicFunc.refGene=stop|ExonicFunc.refGene=start|frameshift|deleteion|insertion|splicing|#' | egrep -v 'Func.refGene=intronic|Func.refGene=UTR3|Func.refGene=UTR5|Func.refGene=intergenic|Func.refGene=ncRNA|Func.refGene=downstream|Func.refGene=upstream' > ${family}.xlink.metasvm.lof.vcf
+    more ${family}.xlink.hg38_multianno.vcf | egrep 'RadialSVM_pred=D|ExonicFunc.refGene=stop|ExonicFunc.refGene=start|frameshift|deletion|insertion|splicing|#' | egrep -v 'Func.refGene=intronic|Func.refGene=UTR3|Func.refGene=UTR5|Func.refGene=intergenic|Func.refGene=ncRNA|Func.refGene=downstream|Func.refGene=upstream' > ${family}.xlink.metasvm.lof.vcf
 
     # Filter X-Linked variants to find CADD deleterious variants
     gatk --java-options "-Xmx${gatkMemory}g" VariantFiltration -R $refGenome -V ${family}.xlink.hg38_multianno.vcf  -filter "vc.getAttributeAsDouble('cadd16_phred', 0) > $params.CADD_THR " --filter-name "High_CADD" -O  ${family}.xlink.cadd.varfilt.vcf
@@ -299,7 +299,7 @@ process DOMINANT {
     # Annotate dominant variants by Annovar
     perl \$ANNOVAR/table_annovar.pl ${family}.dom.filt.vcf  ${params.resourcesDir}/Annovar/humandb/  -buildver hg38 -out ${family}.dom -remove -protocol refGene,cytoBand,esp6500siv2_all,ALL.sites.2015_08,ljb26_all,exac03,dbnsfp42c,revel,intervar_20180118,cadd16all,bravo_v8,clinvar_20220320,gnomad30_genome -operation g,r,f,f,f,f,f,f,f,f,f,f,f -nastring . -vcfinput
 
-    more ${family}.dom.hg38_multianno.vcf | egrep 'RadialSVM_pred=D|ExonicFunc.refGene=stop|ExonicFunc.refGene=start|frameshift|deleteion|insertion|splicing|#' | egrep -v 'Func.refGene=intronic|Func.refGene=UTR3|Func.refGene=UTR5|Func.refGene=intergenic|Func.refGene=ncRNA|Func.refGene=downstream|Func.refGene=upstream|ExonicFunc.refGene=synonymous'> ${family}.dom.metasvm.lof.vcf
+    more ${family}.dom.hg38_multianno.vcf | egrep 'RadialSVM_pred=D|ExonicFunc.refGene=stop|ExonicFunc.refGene=start|frameshift|deletion|insertion|splicing|#' | egrep -v 'Func.refGene=intronic|Func.refGene=UTR3|Func.refGene=UTR5|Func.refGene=intergenic|Func.refGene=ncRNA|Func.refGene=downstream|Func.refGene=upstream|ExonicFunc.refGene=synonymous'> ${family}.dom.metasvm.lof.vcf
 
     # Filter dominant variants using GATK VariantFiltration to find CADD deleterious variants
     gatk --java-options "-Xmx${gatkMemory}g" VariantFiltration -R $refGenome -V ${family}.dom.hg38_multianno.vcf  -filter "vc.getAttributeAsDouble('cadd16_phred', 0) > $params.CADD_THR " --filter-name "High_CADD" -O  ${family}.dom.cadd.varfilt.vcf
