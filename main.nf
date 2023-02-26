@@ -11,8 +11,7 @@ workflow {
 
     // Regular expression patterns for getting sample and family IDs from file names
     def sampleRegexPattern = ~/F\d{3,}.*-\d{3}/
-    def familyRegexPattern = ~/(F\d{3,}).*-\d{3}/
-    def pedigreeRegexPattern = ~/(F\d{3,})-\d{3}-\D|F\d{3,}/
+    def familyRegexPattern = ~/F\d{3,}/
 
     // Ensure sample sheet has complete trios
     def sheet = file(params.samplesheet, checkIfExists: true).readLines()*.split('\t') // Import sample sheet as .tsv
@@ -23,7 +22,7 @@ workflow {
         if(line.size() < 3) {
             error("ERROR: Sample sheet has incomplete trios.")
         }
-        sheetFamilies.add((line[0] =~ familyRegexPattern).findAll()[0][1]) // Get family IDs
+        sheetFamilies.add((line[0] =~ familyRegexPattern).findAll()[0]) // Get family IDs
     }
 
     // Get family IDs for files in pedigree directory
@@ -31,8 +30,7 @@ workflow {
     def pedDirFams = []
     for(item : pedDir) {
         if(item.endsWith(".ped")) {
-            tmp = (item =~ pedigreeRegexPattern).findAll()[0].sort() - null
-            pedDirFams.add(tmp.get(0))
+            pedDirFams.add((item =~ familyRegexPattern).findAll()[0])
         }
     }
 
@@ -64,7 +62,7 @@ workflow {
             def sampleID = (row.Mother =~ sampleRegexPattern).findAll()[0]
 
             // Get family ID ("F" number)
-            def familyID = sampleID.substring(0, sampleID.indexOf("-"))
+            def familyID = (sampleID =~ familyRegexPattern).findAll()[0]
 
             def r1 = file("$params.inDataDir/${row.Mother}/*_R1_*.fastq.gz", checkIfExists: true)
             def r2 = file("$params.inDataDir/${row.Mother}/*_R2_*.fastq.gz", checkIfExists: true)
@@ -88,7 +86,7 @@ workflow {
             def sampleID = (row.Father =~ sampleRegexPattern).findAll()[0]
 
             // Get family ID ("F" number)
-            def familyID = sampleID.substring(0, sampleID.indexOf("-"))
+            def familyID = (sampleID =~ familyRegexPattern).findAll()[0]
 
             def r1 = file("$params.inDataDir/${row.Father}/*_R1_*.fastq.gz", checkIfExists: true)
             def r2 = file("$params.inDataDir/${row.Father}/*_R2_*.fastq.gz", checkIfExists: true)
@@ -112,7 +110,7 @@ workflow {
             def sampleID = (row.Child_Affected =~ sampleRegexPattern).findAll()[0]
 
             // Get family ID ("F" number)
-            def familyID = sampleID.substring(0, sampleID.indexOf("-"))
+            def familyID = (sampleID =~ familyRegexPattern).findAll()[0]
 
             def r1 = file("$params.inDataDir/${row.Child_Affected}/*_R1_*.fastq.gz", checkIfExists: true)
             def r2 = file("$params.inDataDir/${row.Child_Affected}/*_R2_*.fastq.gz", checkIfExists: true)
@@ -137,7 +135,7 @@ workflow {
                 def sampleID = (row.Child_Other =~ sampleRegexPattern).findAll()[0]
 
                 // Get family ID ("F" number)
-                def familyID = sampleID.substring(0, sampleID.indexOf("-"))
+                def familyID = (sampleID =~ familyRegexPattern).findAll()[0]
 
                 def r1 = file("$params.inDataDir/${row.Child_Other}/*_R1_*.fastq.gz", checkIfExists: true)
                 def r2 = file("$params.inDataDir/${row.Child_Other}/*_R2_*.fastq.gz", checkIfExists: true)
@@ -159,8 +157,8 @@ workflow {
         .map{file ->
             // Get family ID (letter, 3 or more digits, -, 3 digits, -, letter (capture group gets just the 'F' number))
             // Alternatively will get family names with just the F### number
-            def idRegex = (file =~ pedigreeRegexPattern).findAll()[0].sort() - null
-            def familyID = idRegex.get(0)
+            def familyID = (file =~ familyRegexPattern).findAll()[0]
+
             return tuple(familyID, file)
         }
         .set{pedigrees}
@@ -177,6 +175,5 @@ workflow {
                     CALL_VAR_F.out.rawGVCF,
                     CALL_VAR_C1.out.rawGVCF,
                     pedigrees)
-
 
 }
