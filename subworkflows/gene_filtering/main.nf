@@ -11,6 +11,7 @@ include { COMPOUND_HETEROZYGOUS } from '../../modules/inheritanceModes'
 include { X_LINKED_RECESSIVE } from '../../modules/inheritanceModes'
 include { DOMINANT } from '../../modules/inheritanceModes'
 include { VARIANTS_TO_TABLE } from '../../modules/inheritanceModes'
+include { KINSHIP } from '../../modules/kinship'
 
 workflow GENE_FILTERING {
     take:
@@ -60,4 +61,7 @@ workflow GENE_FILTERING {
                         COMPOUND_HETEROZYGOUS.out.comphetCaddMetaSVMRareVCF,
                         X_LINKED_RECESSIVE.out.xLinkCaddMetaSVMRareVCF,
                         DOMINANT.out.domCaddMetaSVMRareVCF)
+
+        // Get kinship
+        KINSHIP(COMBINE_AND_GENOTYPE_GVCFS.out.genotype)
 }
