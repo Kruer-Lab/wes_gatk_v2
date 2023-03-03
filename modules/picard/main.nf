@@ -1,8 +1,6 @@
 process PICARD_ADD_REPLACE_READ_GROUPS {
     label 'picard'
 
-    publishDir "${params.outDataDir}/${sample}", mode: 'copy'
-
     input:
         tuple val(family), val(sample), path(sortedBam)
         tuple val(family), val(sample), path(index)
@@ -24,8 +22,6 @@ process PICARD_ADD_REPLACE_READ_GROUPS {
 process PICARD_MARK_DUPLICATES {
     label 'picard'
     
-    publishDir "${params.outDataDir}/${sample}", mode: 'copy'
-
     input:
         tuple val(family), val(sample), path(grpBam)
         tuple val(family), val(sample), path(index)
