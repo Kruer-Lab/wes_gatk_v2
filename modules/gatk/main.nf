@@ -14,6 +14,7 @@ process BQSR {
     output:
         tuple val(family), val(sample), path("${sample}.bqrecal.table"), emit: bqrecalTable
         tuple val(family), val(sample), path("${sample}.bqrecal.bam"), emit: bqrecalBam
+        path("*.bai"), emit: index
 
     script:
     def gatkMemory = task.memory.toString().split()[0]
