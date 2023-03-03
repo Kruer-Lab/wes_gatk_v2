@@ -36,13 +36,16 @@ workflow GENE_FILTERING {
         COMBINE_AND_GENOTYPE_GVCFS(family_rawGVCF_pedigree, refGenome, refIndex)
 
         // Call denovo SNPs
-        DENOVO_SNPS(COMBINE_AND_GENOTYPE_GVCFS.out.genotype, refGenome, refIndex)
+        (denovo_snpIntersectVCF, denovo_snpSelectVCF) = DENOVO_SNPS(COMBINE_AND_GENOTYPE_GVCFS.out.genotype, refGenome, refIndex)
 
         // Call denovo indels
-        DENOVO_INDELS(COMBINE_AND_GENOTYPE_GVCFS.out.genotype, refGenome, refIndex)
+        (denovo_indelIntersectVCF, denovo_indelSelectVCF) = DENOVO_INDELS(COMBINE_AND_GENOTYPE_GVCFS.out.genotype, refGenome, refIndex)
+
+        // Merge DENOVO_SNPS and DENOVO_INDELS outputs
+        denovo_variants = denovo_snpSelectVCF.join(denovo_indelSelectVCF)
 
         // Call homozygous recessive variants
-        HOMOZYGOUS_RECESSIVE(DENOVO_SNPS.out.snpSelectVCF, DENOVO_INDELS.out.indelSelectVCF, refGenome, refIndex)
+        HOMOZYGOUS_RECESSIVE(denovo_variants, refGenome, refIndex)
 
         // Call compound heterozygous variants
         COMPOUND_HETEROZYGOUS(HOMOZYGOUS_RECESSIVE.out.mergedVariantsVCF, refGenome, refIndex)
@@ -53,14 +56,15 @@ workflow GENE_FILTERING {
         // Call dominant variants
         DOMINANT(rawGVCF_child, refGenome, refIndex)
 
+        // Merge variant outputs
+        merged_variants = denovo_snpIntersectVCF.join(denovo_indelIntersectVCF)
+            .join(HOMOZYGOUS_RECESSIVE.out.homCaddMetaSVMRare)
+            .join(COMPOUND_HETEROZYGOUS.out.comphetCaddMetaSVMRareVCF)
+            .join(X_LINKED_RECESSIVE.out.xLinkCaddMetaSVMRareVCF)
+            .join(DOMINANT.out.domCaddMetaSVMRareVCF)
+
         // Format outputs as .csv files
-        VARIANTS_TO_TABLE(
-                        DENOVO_SNPS.out.denovoIntersectVCF,
-                        DENOVO_INDELS.out.denovoIntersectVCF,
-                        HOMOZYGOUS_RECESSIVE.out.homCaddMetaSVMRare,
-                        COMPOUND_HETEROZYGOUS.out.comphetCaddMetaSVMRareVCF,
-                        X_LINKED_RECESSIVE.out.xLinkCaddMetaSVMRareVCF,
-                        DOMINANT.out.domCaddMetaSVMRareVCF)
+        VARIANTS_TO_TABLE(merged_variants)
 
         // Get kinship
         KINSHIP(COMBINE_AND_GENOTYPE_GVCFS.out.genotype)
