@@ -1,7 +1,7 @@
 process KINSHIP {
     label = 'short'
 
-    publishDir "${params.outTrioDir}/Kinship/${family}", pattern: "*.kinship",mode: 'copy'
+    publishDir "${params.outTrioDir}/Kinship/${family}", pattern: "*.kinship.relatedness2",mode: 'copy'
 
     input:
         tuple val(family), path(pedigree), path(rawVCF)
@@ -11,6 +11,6 @@ process KINSHIP {
 
     script:
     """
-    vcftools --vcf $rawVCF --relatedness2 --out ${family}.kinship
+    vcftools --vcf $rawVCF --relatedness2 --out ${family}.kinship.relatedness2
     """
 }
