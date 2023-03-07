@@ -11,6 +11,6 @@ process KINSHIP {
 
     script:
     """
-    vcftools --vcf $rawVCF --relatedness2 --out ${family}.kinship.relatedness2
+    vcftools --vcf $rawVCF --relatedness2 --out ${family}.kinship
     """
 }
