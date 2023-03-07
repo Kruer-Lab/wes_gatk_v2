@@ -4,7 +4,7 @@ process KINSHIP {
     publishDir "${params.outTrioDir}/Kinship/${family}", pattern: "*.kinship",mode: 'copy'
 
     input:
-        tuple val(family), path(rawVCF)
+        tuple val(family), path(pedigree), path(rawVCF)
         
     output:
         path kinshipFile
