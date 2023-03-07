@@ -7,7 +7,7 @@ process KINSHIP {
         tuple val(family), path(pedigree), path(rawVCF)
         
     output:
-        path kinshipFile
+        path "{family}.kinship.relatedness2"
 
     script:
     """
