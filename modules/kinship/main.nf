@@ -7,10 +7,10 @@ process KINSHIP {
         tuple val(family), path(pedigree), path(rawVCF)
         
     output:
-        path "{family}.kinship.relatedness2"
+        path "${family}.kinship.relatedness2"
 
     script:
     """
-    vcftools --vcf $rawVCF --relatedness2 --out ${family}.kinship
+    vcftools --vcf $rawVCF --relatedness2 --out "${family}.kinship"
     """
 }
