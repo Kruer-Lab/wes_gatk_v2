@@ -1,8 +1,6 @@
 process SAMTOOLS_INDEX {
     label 'short'
     
-    publishDir "${params.outDataDir}/${sample}", mode: 'copy'
-
     input:
         tuple val(family), val(sample), path(bam)
 

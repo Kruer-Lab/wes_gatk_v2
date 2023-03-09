@@ -8,6 +8,10 @@ include { GENE_FILTERING } from './subworkflows/gene_filtering'
 
 workflow {
 
+    // Regular expression patterns for getting sample and family IDs from file names
+    def sampleRegexPattern = ~/F\d{3,}.*-\d{3}/
+    def familyRegexPattern = ~/F\d{3,}/
+
     // Ensure sample sheet has complete trios
     def sheet = file(params.samplesheet, checkIfExists: true).readLines()*.split('\t') // Import sample sheet as .tsv
     sheet.remove(0) // Remove header
@@ -17,7 +21,7 @@ workflow {
         if(line.size() < 3) {
             error("ERROR: Sample sheet has incomplete trios.")
         }
-        sheetFamilies.add((line[0] =~ /(\D\d{3,})-\d{3}-\D/).findAll()[0][1]) // Get family IDs
+        sheetFamilies.add((line[0] =~ familyRegexPattern).findAll()[0]) // Get family IDs
     }
 
     // Get family IDs for files in pedigree directory
@@ -25,8 +29,7 @@ workflow {
     def pedDirFams = []
     for(item : pedDir) {
         if(item.endsWith(".ped")) {
-            tmp = (item =~ /(\D\d{3,})-\d{3}-\D|\D\d{3,}/).findAll()[0].sort() - null
-            pedDirFams.add(tmp.get(0))
+            pedDirFams.add((item =~ familyRegexPattern).findAll()[0])
         }
     }
 
@@ -68,6 +71,7 @@ workflow {
 
     // Run variant calling (everything up to HaplotypeCaller)
     if(params.run_variant_calling == true) {
+
         // Import sample sheet and get reads
         // Get mother samples
         Channel
@@ -76,10 +80,10 @@ workflow {
             .splitCsv(header: true, sep: "\t", strip: true)
             .map{row ->
                 // Get sample ID (letter, 3 or more digits, -, 3 digits, -, letter)
-                def sampleID = (row.Mother =~ /\D\d{3,}-\d{3}-\D/).findAll()[0]
+                def sampleID = (row.Mother =~ sampleRegexPattern).findAll()[0]
 
                 // Get family ID ("F" number)
-                def familyID = sampleID.substring(0, sampleID.indexOf("-"))
+                def familyID = (sampleID =~ familyRegexPattern).findAll()[0]
 
                 def r1 = file("$params.inDataDir/${row.Mother}/*_R1_*.fastq.gz", checkIfExists: true)
                 def r2 = file("$params.inDataDir/${row.Mother}/*_R2_*.fastq.gz", checkIfExists: true)
@@ -89,8 +93,8 @@ workflow {
                     error "Incorrect number of reads in ${row.Mother}"
                 }
 
-                return tuple(familyID, sampleID, r1, r2)
-            }
+            return tuple(familyID, sampleID, r1, r2)
+        }
             .set{read_pairs_mother}
 
         // Get father samples
@@ -100,10 +104,10 @@ workflow {
             .splitCsv(header: true, sep: "\t", strip: true)
             .map{row ->
                 // Get sample ID (letter, 3 or more digits, -, 3 digits, -, letter)
-                def sampleID = (row.Father =~ /\D\d{3,}-\d{3}-\D/).findAll()[0]
+                def sampleID = (row.Father =~ sampleRegexPattern).findAll()[0]
 
                 // Get family ID ("F" number)
-                def familyID = sampleID.substring(0, sampleID.indexOf("-"))
+                def familyID = (sampleID =~ familyRegexPattern).findAll()[0]
 
                 def r1 = file("$params.inDataDir/${row.Father}/*_R1_*.fastq.gz", checkIfExists: true)
                 def r2 = file("$params.inDataDir/${row.Father}/*_R2_*.fastq.gz", checkIfExists: true)
@@ -124,10 +128,10 @@ workflow {
             .splitCsv(header: true, sep: "\t", strip: true)
             .map{row ->
                 // Get sample ID (letter, 3 or more digits, -, 3 digits, -, letter)
-                def sampleID = (row.Child_Affected =~ /\D\d{3,}-\d{3}-\D/).findAll()[0]
+                def sampleID = (row.Child_Affected =~ sampleRegexPattern).findAll()[0]
 
                 // Get family ID ("F" number)
-                def familyID = sampleID.substring(0, sampleID.indexOf("-"))
+                def familyID = (sampleID =~ familyRegexPattern).findAll()[0]
 
                 def r1 = file("$params.inDataDir/${row.Child_Affected}/*_R1_*.fastq.gz", checkIfExists: true)
                 def r2 = file("$params.inDataDir/${row.Child_Affected}/*_R2_*.fastq.gz", checkIfExists: true)
@@ -149,23 +153,23 @@ workflow {
             .map{row ->
                 if(row.Child_Other) {
                     // Get sample ID (letter, 3 or more digits, -, 3 digits, -, letter)
-                    def sampleID = (row.Child_Other =~ /\D\d{3,}-\d{3}-\D/).findAll()[0]
+                    def sampleID = (row.Child_Other =~ sampleRegexPattern).findAll()[0]
 
                     // Get family ID ("F" number)
-                    def familyID = sampleID.substring(0, sampleID.indexOf("-"))
+                    def familyID = (sampleID =~ familyRegexPattern).findAll()[0]
 
-                    def r1 = file("$params.inDataDir/${row.Child_Other}/*_R1_*.fastq.gz", checkIfExists: true)
-                    def r2 = file("$params.inDataDir/${row.Child_Other}/*_R2_*.fastq.gz", checkIfExists: true)
+                    def r1 = file("$params.inDataDir/${row.Mother}/*_R1_*.fastq.gz", checkIfExists: true)
+                    def r2 = file("$params.inDataDir/${row.Mother}/*_R2_*.fastq.gz", checkIfExists: true)
 
                     // Ensure only one file is used for each read
                     if(r1.size() != 1 || r2.size != 1) {
-                        error "Incorrect number of reads in ${row.Child_Other}"
+                        error "Incorrect number of reads in ${row.Mother}"
                     }
 
                     return tuple(familyID, sampleID, r1, r2)
                 }
             }
-            .set{read_pairs_child_other}
+            .set{read_pairs_mother}
 
         mother_calls = CALL_VAR_M(read_pairs_mother)
         father_calls = CALL_VAR_F(read_pairs_father)
@@ -201,6 +205,21 @@ workflow {
 
     // Variant filtration
     if(params.run_variant_filtering == true) {
+
+        // Get pedigrees
+        Channel
+        .fromPath("$params.pedigreeDir/*.ped", checkIfExists: true)
+        .ifEmpty{exit 1, "No pedigrees found in $params.pedigreeDir"}
+        .map{file ->
+            // Get family ID (letter, 3 or more digits, -, 3 digits, -, letter (capture group gets just the 'F' number))
+            // Alternatively will get family names with just the F### number
+            def familyID = (file =~ familyRegexPattern).findAll()[0]
+
+            return tuple(familyID, file)
+        }
+        .set{pedigrees}
+
+
         GENE_FILTERING(mother_calls.out.rawGVCF,
                         father_calls.out.rawGVCF,
                         proband_calls.out.rawGVCF,
