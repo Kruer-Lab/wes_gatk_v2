@@ -156,7 +156,7 @@ workflow {
                     return tuple(familyID, sampleID, r1, r2)
                 }
             }
-            .set{read_pairs_mother}
+            .set{read_pairs_child_other}
 
         mother_calls = CALL_VAR_M(read_pairs_mother)
         father_calls = CALL_VAR_F(read_pairs_father)
@@ -251,6 +251,5 @@ workflow {
                 proband_calls,
                 pedigrees)
         }
-
     }
 }
