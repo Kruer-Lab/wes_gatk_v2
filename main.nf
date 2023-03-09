@@ -50,19 +50,6 @@ workflow {
         }
     }
 
-    // Get pedigrees
-    Channel
-    .fromPath("$params.pedigreeDir/*.ped", checkIfExists: true)
-    .ifEmpty{exit 1, "No pedigrees found in $params.pedigreeDir"}
-    .map{file ->
-        // Get family ID (letter, 3 or more digits, -, 3 digits, -, letter (capture group gets just the 'F' number))
-        // Alternatively will get family names with just the F### number
-        def idRegex = (file =~ /(\D\d{3,})-\d{3}-\D|\D\d{3,}/).findAll()[0].sort() - null
-        def familyID = idRegex.get(0)
-        return tuple(familyID, file)
-    }
-    .set{pedigrees}
-
     // Variant calling output channels
     mother_calls = Channel.empty()
     father_calls = Channel.empty()
@@ -180,27 +167,60 @@ workflow {
     // Skipping variant calling
     else if(params.run_variant_calling == false) {
 
-        // Get sample 
-        def mothers = sheet.collect{if(it[0]) {return it[0]}}
-        def fathers = sheet.collect{if(it[1]) {return it[1]}}
-        def proband = sheet.collect{if(it[2]) {return it[2]}}
-        def otherChild = sheet.collect{if(it[3]) {return it[3]}}
+        // Get mother gvcf
+        Channel
+            .fromPath(params.samplesheet, checkIfExists: true)
+            .ifEmpty{exit 1, "No sample sheet found at $params.samplesheet"}
+            .splitCsv(header: true, sep: "\t", strip: true)
+            .map{row ->
+                // Get sample ID (letter, 3 or more digits, -, 3 digits, -, letter)
+                def sampleID = (row.Mother =~ sampleRegexPattern).findAll()[0]
 
-        println("Mothers:" + mothers)
-        println("Fathers: " + fathers)
-        println("Proband: ", + proband)
-        println("Other Child: " + otherChild)
+                // Get family ID ("F" number)
+                def familyID = (sampleID =~ familyRegexPattern).findAll()[0]
 
-        // Get raw GVCF files for samples
-        motherRawGVCFs = []
-        fatherRawGVCFs = []
-        probandRawGVCFs = []
-        otherChildRawGVCFs = []
+                def gvcf = file("$params.outDataDir/$sampleID/${sampleID}.raw.g.vcf", checkIfExists: true)
 
-        mother_calls = Channel.fromPath(motherRawGVCFs).map{return tuple(family, it)}
-        father_calls = Channel.fromPath(fatherRawGVCFs).map{return tuple(family, it)}
-        proband_calls = Channel.fromPath(probandRawGVCFs).map{return tuple(family, it)}
-        other_child_calls = Channel.fromPath(otherChildRawGVCFs).map{return tuple(family, it)}
+                return tuple(familyID, gvcf)
+            }
+            .set{mother_calls}
+
+        // Get father gvcf
+        Channel
+            .fromPath(params.samplesheet, checkIfExists: true)
+            .ifEmpty{exit 1, "No sample sheet found at $params.samplesheet"}
+            .splitCsv(header: true, sep: "\t", strip: true)
+            .map{row ->
+                // Get sample ID (letter, 3 or more digits, -, 3 digits, -, letter)
+                def sampleID = (row.Father =~ sampleRegexPattern).findAll()[0]
+
+                // Get family ID ("F" number)
+                def familyID = (sampleID =~ familyRegexPattern).findAll()[0]
+
+                def gvcf = file("$params.outDataDir/$sampleID/${sampleID}.raw.g.vcf", checkIfExists: true)
+
+                return tuple(familyID, gvcf)
+            }
+            .set{father_calls}
+
+        // Get affected child gvcf
+        Channel
+            .fromPath(params.samplesheet, checkIfExists: true)
+            .ifEmpty{exit 1, "No sample sheet found at $params.samplesheet"}
+            .splitCsv(header: true, sep: "\t", strip: true)
+            .map{row ->
+                // Get sample ID (letter, 3 or more digits, -, 3 digits, -, letter)
+                def sampleID = (row.Child_Affected =~ sampleRegexPattern).findAll()[0]
+
+                // Get family ID ("F" number)
+                def familyID = (sampleID =~ familyRegexPattern).findAll()[0]
+
+                def gvcf = file("$params.outDataDir/$sampleID/${sampleID}.raw.g.vcf", checkIfExists: true)
+
+                return tuple(familyID, gvcf)
+            }
+            .set{proband_calls}
+
     }
 
     // Variant filtration
@@ -219,11 +239,18 @@ workflow {
         }
         .set{pedigrees}
 
+        if(params.run_variant_calling == true) {
+            GENE_FILTERING(mother_calls.out.rawGVCF,
+                            father_calls.out.rawGVCF,
+                            proband_calls.out.rawGVCF,
+                            pedigrees)
+        }
+        else if(params.run_variant_calling == false) {
+            GENE_FILTERING(mother_calls,
+                father_calls,
+                proband_calls,
+                pedigrees)
+        }
 
-        GENE_FILTERING(mother_calls.out.rawGVCF,
-                        father_calls.out.rawGVCF,
-                        proband_calls.out.rawGVCF,
-                        pedigrees)
     }
-
 }
