@@ -50,12 +50,6 @@ workflow {
         }
     }
 
-    // Variant calling output channels
-    mother_calls = Channel.empty()
-    father_calls = Channel.empty()
-    proband_calls = Channel.empty()
-    other_child_calls = Channel.empty()
-
     // Run variant calling (everything up to HaplotypeCaller)
     if(params.run_variant_calling == true) {
 
@@ -158,10 +152,10 @@ workflow {
             }
             .set{read_pairs_child_other}
 
-        mother_calls = CALL_VAR_M(read_pairs_mother)
-        father_calls = CALL_VAR_F(read_pairs_father)
-        proband_calls = CALL_VAR_C1(read_pairs_child_affected)
-        other_child_calls = CALL_VAR_C2(read_pairs_child_other)
+        CALL_VAR_M(read_pairs_mother)
+        CALL_VAR_F(read_pairs_father)
+        CALL_VAR_C1(read_pairs_child_affected)
+        CALL_VAR_C2(read_pairs_child_other)
     }
 
     // Skipping variant calling
@@ -240,9 +234,9 @@ workflow {
         .set{pedigrees}
 
         if(params.run_variant_calling == true) {
-            GENE_FILTERING(mother_calls.out.rawGVCF,
-                            father_calls.out.rawGVCF,
-                            proband_calls.out.rawGVCF,
+            GENE_FILTERING(CALL_VAR_M.out.rawGVCF,
+                            CALL_VAR_F.out.rawGVCF,
+                            CALL_VAR_C1.out.rawGVCF,
                             pedigrees)
         }
         else if(params.run_variant_calling == false) {
