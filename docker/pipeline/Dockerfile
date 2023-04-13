@@ -89,3 +89,17 @@ RUN mkdir annovar &&\
     rm annovar.latest.tar.gz
 
 ENV ANNOVAR="/annovar/annovar/"
+
+# Install TrioDenovo
+RUN mkdir triodenovo &&\
+    cd triodenovo && \
+    wget https://genome.sph.umich.edu/w/images/f/f4/Triodenovo.0.06.tar.gz &&\
+    tar -xf Triodenovo.0.06.tar.gz
+
+COPY Argument.h /triodenovo/triodenovo.0.06/base/
+    
+RUN cd triodenovo/triodenovo.0.06/ &&\
+    make &&\
+    rm Triodenovo.0.06.tar.gz
+
+ENV TRIODENOVO="/triodenovo/triodenovo.0.06/bin/triodenovo"
