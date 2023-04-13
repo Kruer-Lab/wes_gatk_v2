@@ -55,7 +55,8 @@ CHILD_SAMPLE_NAME=$CHILD_DIR
 MOTHER_SAMPLE_NAME=$MOTHER_DIR 
 FATHER_SAMPLE_NAME=$FATHER_DIR
 
-PEDIGREE="${PEDIGREES_DIR}/pedigree.${CHILD_SAMPLE_NAME}.p2.ped"
+#PEDIGREE="${PEDIGREES_DIR}/pedigree.${CHILD_SAMPLE_NAME}.p2.ped"
+PEDIGREE="pedigree.${CHILD_SAMPLE_NAME}.p2.ped"
 SAMPLE_LIST=($CHILD_SAMPLE_NAME $MOTHER_SAMPLE_NAME $FATHER_SAMPLE_NAME)
 SAMPLE_LIST_SORTED=( $(
 for SAMP in "${SAMPLE_LIST[@]}"
@@ -94,10 +95,10 @@ mkdir -p ${OUTPUTS_TRIO}
 echo $REF
 
 echo -e "\n\n*********************** Combine GVCs into one GVC file ***********************\n\n"
-$GATK CombineGVCFs -R $REF --variant ${CHILD}.raw.g.vcf --variant ${MOTHER}.raw.g.vcf --variant ${FATHER}.raw.g.vcf -O ${TRIO}.comb.trio.raw.vcf
+#$GATK CombineGVCFs -R $REF --variant ${CHILD}.raw.g.vcf --variant ${MOTHER}.raw.g.vcf --variant ${FATHER}.raw.g.vcf -O ${TRIO}.comb.trio.raw.vcf
 
 echo -e "\n\n*********************** GenotypeGVCFs on trio *********************** \n\n"
-$GATK --java-options "-Xmx4g" GenotypeGVCFs -R $REF --variant ${TRIO}.comb.trio.raw.vcf -O ${TRIO}.trio.raw.vcf
+#$GATK --java-options "-Xmx4g" GenotypeGVCFs -R $REF --variant ${TRIO}.comb.trio.raw.vcf -O ${TRIO}.trio.raw.vcf
 
 
 echo -e "\n=============================================================================================\n"
@@ -125,7 +126,8 @@ echo -e "\n\n *********************** Index the vcf file of annotated deleteriou
 $IGVTOOLS index ${TRIO}.snp.hardfilt.hg38_multianno.vcf
 
 echo -e "\n\n*********************** Find Denovo SNPs ***********************\n\n"
-less ${TRIO}.snp.hardfilt.hg38_multianno.vcf | perl -lane 'print if /#/; "$F[$ENV{CHILD_IDX}]" =~ /(\d+)\/(\d+):/; next if $1==$2; "$F[$ENV{MOTHER_IDX}]" =~ /(\d+)\/(\d+):/; next if $1!=$2 || $1==1; "$F[$ENV{FATHER_IDX}]" =~ /(\d+)\/(\d+):/; next if $1!=$2 || $1==1; print' > ${TRIO}.snp.denovo.vcf
+#less ${TRIO}.snp.hardfilt.hg38_multianno.vcf | perl -lane 'print if /#/; "$F[$ENV{CHILD_IDX}]" =~ /(\d+)\/(\d+):/; next if $1==$2; "$F[$ENV{MOTHER_IDX}]" =~ /(\d+)\/(\d+):/; next if $1!=$2 || $1==1; "$F[$ENV{FATHER_IDX}]" =~ /(\d+)\/(\d+):/; next if $1!=$2 || $1==1; print' > ${TRIO}.snp.denovo.vcf
+docker run -it -v ${PEDIGREES_DIR}:/Pedigree_Dir_Dock  -v ${OUTPUTS_TRIO}:/Output_Dir_Dock spashleyfu/ubuntu20_triodenovo:0.0.6  triodenovo --ped /Pedigree_Dir_Dock/$PEDIGREE --in_vcf /Output_Dir_Dock/${SAMPLE_ID_CHILD}.snp.hardfilt.vcf --out /Output_Dir_Dock/${CHILD_SAMPLE_NAME}.snp.denovo.vcf
 
 
 echo -e "\n\n*********************** Filter denovo SNPs using GATK VariantFiltration to find rare variants *********************** \n\n"
@@ -171,7 +173,8 @@ echo -e "\n\n *********************** Index the vcf file of annotated deleteriou
 $IGVTOOLS index ${TRIO}.indel.hardfilt.hg38_multianno.vcf
 
 echo -e "\n\n*********************** Find Denovo INDELs  ***********************\n\n"
-less ${TRIO}.indel.hardfilt.hg38_multianno.vcf | perl -lane 'print if /#/; "$F[$ENV{CHILD_IDX}]" =~ /(\d+)\/(\d+):/; next if $1==$2; "$F[$ENV{MOTHER_IDX}]" =~ /(\d+)\/(\d+):/; next if $1!=$2 || $1==1; "$F[$ENV{FATHER_IDX}]" =~ /(\d+)\/(\d+):/; next if $1!=$2 || $1==1; print' > ${TRIO}.indel.denovo.vcf
+#less ${TRIO}.indel.hardfilt.hg38_multianno.vcf | perl -lane 'print if /#/; "$F[$ENV{CHILD_IDX}]" =~ /(\d+)\/(\d+):/; next if $1==$2; "$F[$ENV{MOTHER_IDX}]" =~ /(\d+)\/(\d+):/; next if $1!=$2 || $1==1; "$F[$ENV{FATHER_IDX}]" =~ /(\d+)\/(\d+):/; next if $1!=$2 || $1==1; print' > ${TRIO}.indel.denovo.vcf
+docker run -it -v ${PEDIGREES_DIR}:/Pedigree_Dir_Dock  -v ${OUTPUTS_TRIO}:/Output_Dir_Dock spashleyfu/ubuntu20_triodenovo:0.0.6  triodenovo --ped /Pedigree_Dir_Dock/$PEDIGREE --in_vcf /Output_Dir_Dock/${SAMPLE_ID_CHILD}.indel.hardfilt.vcf --out /Output_Dir_Dock/${CHILD_SAMPLE_NAME}.indel.denovo.vcf
 
 
 echo -e "\n\n*********************** Filter denovo INDELs using GATK VariantFiltration to find rare variants *********************** \n\n"
@@ -206,7 +209,7 @@ perl ${ANNOVAR_DIR}/table_annovar.pl  ${TRIO}.hom.filt.vcf  ${ANNOVAR_DIR}/human
 
 
 echo -e "\n\n*********************** Filter homozygous variants to find MetaSVM deletrious variants *********************** \n\n"
-more ${TRIO}.hom.hg38_multianno.vcf | egrep 'RadialSVM_pred=D|ExonicFunc.refGene=stop|ExonicFunc.refGene=start|frameshift|deleteion|insertion|splicing|#' | egrep -v 'Func.refGene=intronic|Func.refGene=UTR3|Func.refGene=UTR5|Func.refGene=intergenic|Func.refGene=ncRNA|Func.refGene=downstream|Func.refGene=upstream' > ${TRIO}.hom.metasvm.lof.vcf
+more ${TRIO}.hom.hg38_multianno.vcf | egrep 'RadialSVM_pred=D|ExonicFunc.refGene=stop|ExonicFunc.refGene=start|frameshift|deletion|insertion|splicing|#' | egrep -v 'Func.refGene=intronic|Func.refGene=UTR3|Func.refGene=UTR5|Func.refGene=intergenic|Func.refGene=ncRNA|Func.refGene=downstream|Func.refGene=upstream' > ${TRIO}.hom.metasvm.lof.vcf
 
 
 echo -e "\n\n*********************** Filter homozygous variants to find CADD deletrious variants *********************** \n\n"
@@ -233,7 +236,9 @@ $GATK SelectVariants -R $REF -V ${TRIO}.hom.cadd.metasvm.varfilt.vcf -select 'FI
 uniq -f 7 ${TRIO}.hom.cadd.metasvm.rare.0.vcf > ${TRIO}.hom.cadd.metasvm.rare.00.vcf
 
 echo -e "\n *********************** Hom: remove homozygous variants in chrX if the proband is a male  ***********************\n\n" 
-SEX=$(cat $PEDIGREE | awk -v samp="$CHILD_SAMPLE_NAME" '$2 == samp {print}' | cut -f5 )
+#SEX=$(cat $PEDIGREE | awk -v samp="$CHILD_SAMPLE_NAME" '$2 == samp {print}' | cut -f5 )
+SEX=$(cat ${PEDIGREES_DIR}/$PEDIGREE | awk -v samp="$CHILD_SAMPLE_NAME" '$2 == samp {print}' | cut -f5 )
+
 echo -e "proband sex is: $SEX "
 if [[ $SEX == 1 ]]; then	
 	awk '$1 != "chrX" {print}' ${TRIO}.hom.cadd.metasvm.rare.00.vcf > temp && mv temp ${TRIO}.hom.cadd.metasvm.rare.vcf
@@ -290,7 +295,7 @@ vcftools --vcf ${TRIO}.merged.hg38_multianno.vcf --positions ${TRIO}.positions.t
 
 
 
-more ${TRIO}.comphet.recode.vcf | egrep 'RadialSVM_pred=D|ExonicFunc.refGene=stop|ExonicFunc.refGene=start|frameshift|deleteion|insertion|splicing|#' | egrep -v 'Func.refGene=intronic|Func.refGene=UTR3|Func.refGene=UTR5|Func.refGene=intergenic|Func.refGene=ncRNA|Func.refGene=downstream|Func.refGene=upstream|ExonicFunc.refGene=synonymous'> ${TRIO}.comphet.metasvm.lof.vcf
+more ${TRIO}.comphet.recode.vcf | egrep 'RadialSVM_pred=D|ExonicFunc.refGene=stop|ExonicFunc.refGene=start|frameshift|deletion|insertion|splicing|#' | egrep -v 'Func.refGene=intronic|Func.refGene=UTR3|Func.refGene=UTR5|Func.refGene=intergenic|Func.refGene=ncRNA|Func.refGene=downstream|Func.refGene=upstream|ExonicFunc.refGene=synonymous'> ${TRIO}.comphet.metasvm.lof.vcf
 
 
 echo -e "\n\n*********************** Filter compound het variants using GATK VariantFiltration to find CADD deletrious variants *********************** \n\n"
@@ -328,7 +333,7 @@ echo -e "\n\n*********************** Annotate x-linked recessive variants by Ann
 perl ${ANNOVAR_DIR}/table_annovar.pl  ${TRIO}.xlink.filt.vcf  ${ANNOVAR_DIR}/humandb/  -buildver hg38 -out ${TRIO}.xlink -remove -protocol refGene,cytoBand,esp6500siv2_all,ALL.sites.2015_08,ljb26_all,exac03,dbnsfp42c,revel,intervar_20180118,cadd16all,bravo_v8,clinvar_20220320,gnomad30_genome -operation g,r,f,f,f,f,f,f,f,f,f,f,f -nastring . -vcfinput
 
 echo -e "\n\n*********************** Filter x-linked variants to find MetaSVM deletrious variants *********************** \n\n"
-more ${TRIO}.xlink.hg38_multianno.vcf | egrep 'RadialSVM_pred=D|ExonicFunc.refGene=stop|ExonicFunc.refGene=start|frameshift|deleteion|insertion|splicing|#' | egrep -v 'Func.refGene=intronic|Func.refGene=UTR3|Func.refGene=UTR5|Func.refGene=intergenic|Func.refGene=ncRNA|Func.refGene=downstream|Func.refGene=upstream' > ${TRIO}.xlink.metasvm.lof.vcf
+more ${TRIO}.xlink.hg38_multianno.vcf | egrep 'RadialSVM_pred=D|ExonicFunc.refGene=stop|ExonicFunc.refGene=start|frameshift|deletion|insertion|splicing|#' | egrep -v 'Func.refGene=intronic|Func.refGene=UTR3|Func.refGene=UTR5|Func.refGene=intergenic|Func.refGene=ncRNA|Func.refGene=downstream|Func.refGene=upstream' > ${TRIO}.xlink.metasvm.lof.vcf
 
 
 echo -e "\n\n*********************** Filter x-linked variants to find CADD deletrious variants *********************** \n\n"
@@ -375,7 +380,7 @@ less ${TRIO}.dom.select.vcf | perl -lane 'print if /#/; next if ("$F[9]" =~ /^\.
 echo -e "\n\n*********************** Annotate dominant variants by Annovar ***********************\n\n"
 perl ${ANNOVAR_DIR}/table_annovar.pl ${TRIO}.dom.filt.vcf  ${ANNOVAR_DIR}/humandb/  -buildver hg38 -out ${TRIO}.dom -remove -protocol refGene,cytoBand,esp6500siv2_all,ALL.sites.2015_08,ljb26_all,exac03,dbnsfp42c,revel,intervar_20180118,cadd16all,bravo_v8,clinvar_20220320,gnomad30_genome -operation g,r,f,f,f,f,f,f,f,f,f,f,f -nastring . -vcfinput
 
-more ${TRIO}.dom.hg38_multianno.vcf | egrep 'RadialSVM_pred=D|ExonicFunc.refGene=stop|ExonicFunc.refGene=start|frameshift|deleteion|insertion|splicing|#' | egrep -v 'Func.refGene=intronic|Func.refGene=UTR3|Func.refGene=UTR5|Func.refGene=intergenic|Func.refGene=ncRNA|Func.refGene=downstream|Func.refGene=upstream|ExonicFunc.refGene=synonymous'> ${TRIO}.dom.metasvm.lof.vcf
+more ${TRIO}.dom.hg38_multianno.vcf | egrep 'RadialSVM_pred=D|ExonicFunc.refGene=stop|ExonicFunc.refGene=start|frameshift|deletion|insertion|splicing|#' | egrep -v 'Func.refGene=intronic|Func.refGene=UTR3|Func.refGene=UTR5|Func.refGene=intergenic|Func.refGene=ncRNA|Func.refGene=downstream|Func.refGene=upstream|ExonicFunc.refGene=synonymous'> ${TRIO}.dom.metasvm.lof.vcf
 
 echo -e "\n\n*********************** Filter dominant variants using GATK VariantFiltration to find CADD deletrious variants *********************** \n\n"
 $GATK VariantFiltration -R $REF -V ${TRIO}.dom.hg38_multianno.vcf  -filter "vc.getAttributeAsDouble('cadd16_phred', 0) > $CADD_THR " --filter-name "High_CADD" -O  ${TRIO}.dom.cadd.varfilt.vcf

@@ -33,8 +33,8 @@ process DENOVO_SNPS {
     igvtools index ${family}.snp.hardfilt.hg38_multianno.vcf
 
     # Find denovo SNPs
-    less ${family}.snp.hardfilt.hg38_multianno.vcf | perl -lane 'print if /#/; "\$F[$params.childIDX]" =~ /(\\d+)\\/(\\d+):/; next if \$1==\$2; "\$F[$params.motherIDX]" =~ /(\\d+)\\/(\\d+):/; next if \$1!=\$2 || \$1==1; "\$F[$params.fatherIDX]" =~ /(\\d+)\\/(\\d+):/; next if \$1!=\$2 || \$1==1; print' > ${family}.snp.denovo.vcf
-    
+    \$TRIODENOVO --ped $pedigree --in_vcf ${family}.snp.hardfilt.vcf --out ${family}.snp.denovo.vcf
+
     # Filter denovo SNPs using GATK VariantFiltration to find rare variants
     gatk --java-options "-Xmx${gatkMemory}g"  VariantFiltration -R $refGenome -V ${family}.snp.hardfilt.hg38_multianno.vcf  -filter "(vc.getAttributeAsString('bravo_freeze8', null).equals('.') || vc.getAttributeAsDouble('bravo_freeze8', 0) < $params.MAF_DEN) && (vc.getAttributeAsString('AF', null).equals('.') || vc.getAttributeAsDouble('AF', 0) < $params.MAF_DEN)" --filter-name "Rare" -O  ${family}.snp.varfilt.vcf
     gatk --java-options "-Xmx${gatkMemory}g" SelectVariants -R $refGenome -V ${family}.snp.varfilt.vcf -select 'FILTER =~ Rare' -O ${family}.snp.rare.vcf
@@ -82,7 +82,7 @@ process DENOVO_INDELS {
     igvtools index ${family}.indel.hardfilt.hg38_multianno.vcf
 
     # Find denovo indels
-    less ${family}.indel.hardfilt.hg38_multianno.vcf | perl -lane 'print if /#/; "\$F[$params.childIDX]" =~ /(\\d+)\\/(\\d+):/; next if \$1==\$2; "\$F[$params.motherIDX]" =~ /(\\d+)\\/(\\d+):/; next if \$1!=\$2 || \$1==1; "\$F[$params.fatherIDX]" =~ /(\\d+)\\/(\\d+):/; next if \$1!=\$2 || \$1==1; print' > ${family}.indel.denovo.vcf
+    \$TRIODENOVO --ped $pedigree --in_vcf ${family}.indel.hardfilt.vcf --out ${family}.indel.denovo.vcf
 
     # Filter denovo indels using GATK VariantFiltration to find rare variants
     gatk --java-options "-Xmx${gatkMemory}g" VariantFiltration -R $refGenome -V ${family}.indel.hardfilt.hg38_multianno.vcf  -filter "(vc.getAttributeAsString('bravo_freeze8', null).equals('.') || vc.getAttributeAsDouble('bravo_freeze8', 0) < $params.MAF_DEN) && (vc.getAttributeAsString('AF', null).equals('.') || vc.getAttributeAsDouble('AF', 0) < $params.MAF_DEN)" --filter-name "Rare" -O  ${family}.indel.varfilt.vcf
