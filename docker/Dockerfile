@@ -102,6 +102,7 @@ COPY Argument.h /triodenovo/triodenovo.0.06/base/
     
 RUN cd triodenovo/triodenovo.0.06/ &&\
     make &&\
+    chmod -R +x /triodenovo/triodenovo.0.06/ &&\
     rm /triodenovo/Triodenovo.0.06.tar.gz
 
 ENV TRIODENOVO="/triodenovo/triodenovo.0.06/bin/triodenovo"
