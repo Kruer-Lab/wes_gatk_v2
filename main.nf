@@ -1,5 +1,6 @@
 nextflow.enable.dsl=2
 
+include { FASTQC; MULTIQC } from './modules/qc'
 include { CALL_VARIANTS as CALL_VAR_M } from './subworkflows/call_variants'
 include { CALL_VARIANTS as CALL_VAR_F } from './subworkflows/call_variants'
 include { CALL_VARIANTS as CALL_VAR_C1 } from './subworkflows/call_variants'
@@ -48,6 +49,13 @@ workflow {
         if(!pedDirFams.contains(fam)) {
             error("ERROR: Pedigree not found for " + fam)
         }
+    }
+
+    // Run FastQC and MultiQC
+    if(params.run_qc == true) {
+        
+        // Get all fastq files in inDataDir
+        Channel.fromPath("${params.inDataDir}/**.fastq.gz") | FASTQC | collect | MULTIQC
     }
 
     // Run variant calling (everything up to HaplotypeCaller)

@@ -12,6 +12,7 @@ RUN apt-get update && apt-get install -y \
     default-jdk \
     pkg-config \
     python-is-python3 \
+    python3-pip \
     unzip \
     wget \
     zlib1g-dev
@@ -106,3 +107,15 @@ RUN cd triodenovo/triodenovo.0.06/ &&\
     rm /triodenovo/Triodenovo.0.06.tar.gz
 
 ENV TRIODENOVO="/triodenovo/triodenovo.0.06/bin/triodenovo"
+
+# Install FastQC
+RUN mkdir fastqc &&\
+    cd fastqc &&\
+    wget https://www.bioinformatics.babraham.ac.uk/projects/fastqc/fastqc_v0.12.1.zip &&\
+    unzip fastqc_v0.12.1.zip &&\
+    rm fastqc_v0.12.1.zip
+
+ENV PATH="$PATH:/fastqc/FastQC"
+
+# Install MultiQC
+RUN pip install multiqc
