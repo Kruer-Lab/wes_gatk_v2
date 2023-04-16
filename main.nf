@@ -9,7 +9,7 @@ include { GENE_FILTERING } from './subworkflows/gene_filtering'
 workflow {
 
     // Regular expression patterns for getting sample and family IDs from file names
-    def sampleRegexPattern = ~/F\d{3,}.*-\d{3}/
+    def sampleRegexPattern = ~/F\d{3,}.*-\d{3}-[AU]/
     def familyRegexPattern = ~/F\d{3,}/
 
     // Ensure sample sheet has complete trios
@@ -159,7 +159,7 @@ workflow {
     }
 
     // Skipping variant calling
-    else if(params.run_variant_calling == false) {
+    else if(params.run_variant_calling == false && params.run_variant_filtering == true) {
 
         // Get mother gvcf
         Channel
