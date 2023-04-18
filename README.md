@@ -34,7 +34,7 @@ This pipeline supports running locally, in an interactive session on a HPC, and 
     - If running headless on HPC (recommended): `sbatch submitNextflowRun.sh`
 
 ## Sample sheet format
-The sample sheet is a .tsv file containing a trio on each row. The sample sheet also supports quads with the second child specified under the `Child_Other` column. Each entry contains the directory name that the read pairs are inside of.
+The sample sheet is a .tsv file containing a trio on each row. The sample sheet also supports larger families with the other members specified under the `Other_Members` column separated by commas. Each entry contains the directory name that the read pairs are inside of.
 
 Example directory structure:
 ```
@@ -51,8 +51,8 @@ Example directory structure:
 ```
 The `inDataDir` in the `nextflow.config` file would point to the `data/` directory. `samplesheet.tsv` would contain:
 
-|Mother         | Father      | Child_Affected | Child_Other |
-| --------------|-------------|----------------|------------ |
+|Mother         | Father      | Child_Affected | Other_Members |
+| --------------|-------------|----------------|---------------|
 | M_F279-001-U | M_F279-002-U | M_F279-003-A   |
 
 ## Pipeline outputs
