@@ -4,7 +4,7 @@ include { FASTQC; MULTIQC } from './modules/qc'
 include { CALL_VARIANTS as CALL_VAR_M } from './subworkflows/call_variants'
 include { CALL_VARIANTS as CALL_VAR_F } from './subworkflows/call_variants'
 include { CALL_VARIANTS as CALL_VAR_C1 } from './subworkflows/call_variants'
-include { CALL_VARIANTS as CALL_VAR_C2 } from './subworkflows/call_variants'
+include { CALL_VARIANTS as CALL_VAR_OM } from './subworkflows/call_variants'
 include { GENE_FILTERING } from './subworkflows/gene_filtering'
 
 workflow {
@@ -79,7 +79,7 @@ workflow {
 
                 // Ensure only one file is used for each read
                 if(r1.size() != 1 || r2.size != 1) {
-                    error "Incorrect number of reads in ${row.Mother}"
+                    error "Incorrect number of file pairs in ${row.Mother}"
                 }
 
             return tuple(familyID, sampleID, r1, r2)
@@ -103,7 +103,7 @@ workflow {
 
                 // Ensure only one file is used for each read
                 if(r1.size() != 1 || r2.size != 1) {
-                    error "Incorrect number of reads in ${row.Father}"
+                    error "Incorrect number of file pairs in ${row.Father}"
                 }
 
                 return tuple(familyID, sampleID, r1, r2)
@@ -127,43 +127,43 @@ workflow {
 
                 // Ensure only one file is used for each read
                 if(r1.size() != 1 || r2.size != 1) {
-                    error "Incorrect number of reads in ${row.Child_Affected}"
+                    error "Incorrect number of file pairs in ${row.Child_Affected}"
                 }
 
                 return tuple(familyID, sampleID, r1, r2)
             }
             .set{read_pairs_child_affected}
 
-        // Get second child samples for quads (if any)
+        // Get other samples in family (if any)
         Channel
             .fromPath(params.samplesheet, checkIfExists: true)
             .ifEmpty{exit 1, "No sample sheet found at $params.samplesheet"}
             .splitCsv(header: true, sep: "\t", strip: true)
             .map{row ->
-                if(row.Child_Other) {
+                if(row.Other_Members) {
                     // Get sample ID (letter, 3 or more digits, -, 3 digits, -, letter)
-                    def sampleID = (row.Child_Other =~ sampleRegexPattern).findAll()[0]
+                    def sampleID = (row.Other_Members =~ sampleRegexPattern).findAll()[0]
 
                     // Get family ID ("F" number)
                     def familyID = (sampleID =~ familyRegexPattern).findAll()[0]
 
-                    def r1 = file("$params.inDataDir/${row.Mother}/*_R1_*.fastq.gz", checkIfExists: true)
-                    def r2 = file("$params.inDataDir/${row.Mother}/*_R2_*.fastq.gz", checkIfExists: true)
+                    def r1 = file("$params.inDataDir/${row.Other_Members}/*_R1_*.fastq.gz", checkIfExists: true)
+                    def r2 = file("$params.inDataDir/${row.Other_Members}/*_R2_*.fastq.gz", checkIfExists: true)
 
                     // Ensure only one file is used for each read
                     if(r1.size() != 1 || r2.size != 1) {
-                        error "Incorrect number of reads in ${row.Mother}"
+                        error "Incorrect number of file pairs in ${row.Other_Members}"
                     }
 
                     return tuple(familyID, sampleID, r1, r2)
                 }
             }
-            .set{read_pairs_child_other}
+            .set{read_pairs_other_members}
 
         CALL_VAR_M(read_pairs_mother)
         CALL_VAR_F(read_pairs_father)
         CALL_VAR_C1(read_pairs_child_affected)
-        CALL_VAR_C2(read_pairs_child_other)
+        CALL_VAR_OM(read_pairs_other_members)
     }
 
     // Skipping variant calling
