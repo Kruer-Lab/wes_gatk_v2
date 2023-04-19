@@ -53,7 +53,7 @@ The `inDataDir` in the `nextflow.config` file would point to the `data/` directo
 
 |Mother         | Father      | Child_Affected | Other_Members |
 | --------------|-------------|----------------|---------------|
-| M_F279-001-U | M_F279-002-U | M_F279-003-A   |
+| M_F279-001-U | M_F279-002-U | M_F279-003-A   | M_F279-004-U,M_F279-005-A
 
 ## Pipeline outputs
 Output directories are specified in the `nextflow.config` file under `outDataDir` and `outTrioDir`. The `outDataDir` contains primarily BAM and SAM files while the `outTrioDir` contains the variant call sheets.

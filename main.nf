@@ -3,14 +3,14 @@ nextflow.enable.dsl=2
 include { FASTQC; MULTIQC } from './modules/qc'
 include { CALL_VARIANTS as CALL_VAR_M } from './subworkflows/call_variants'
 include { CALL_VARIANTS as CALL_VAR_F } from './subworkflows/call_variants'
-include { CALL_VARIANTS as CALL_VAR_C1 } from './subworkflows/call_variants'
+include { CALL_VARIANTS as CALL_VAR_C } from './subworkflows/call_variants'
 include { CALL_VARIANTS as CALL_VAR_OM } from './subworkflows/call_variants'
 include { GENE_FILTERING } from './subworkflows/gene_filtering'
 
 workflow {
 
     // Regular expression patterns for getting sample and family IDs from file names
-    def sampleRegexPattern = ~/F\d{3,}.*-\d{3}-[AU]/
+    def sampleRegexPattern = ~/F\d{3,}.*-\d{3}.*-[AU]/
     def familyRegexPattern = ~/F\d{3,}/
 
     // Ensure sample sheet has complete trios
@@ -74,8 +74,8 @@ workflow {
                 // Get family ID ("F" number)
                 def familyID = (sampleID =~ familyRegexPattern).findAll()[0]
 
-                def r1 = file("$params.inDataDir/${row.Mother}/*_R1_*.fastq.gz", checkIfExists: true)
-                def r2 = file("$params.inDataDir/${row.Mother}/*_R2_*.fastq.gz", checkIfExists: true)
+                def r1 = file("$params.inDataDir/${row.Mother}/*_R1*.fastq.gz", checkIfExists: true)
+                def r2 = file("$params.inDataDir/${row.Mother}/*_R2*.fastq.gz", checkIfExists: true)
 
                 // Ensure only one file is used for each read
                 if(r1.size() != 1 || r2.size != 1) {
@@ -98,8 +98,8 @@ workflow {
                 // Get family ID ("F" number)
                 def familyID = (sampleID =~ familyRegexPattern).findAll()[0]
 
-                def r1 = file("$params.inDataDir/${row.Father}/*_R1_*.fastq.gz", checkIfExists: true)
-                def r2 = file("$params.inDataDir/${row.Father}/*_R2_*.fastq.gz", checkIfExists: true)
+                def r1 = file("$params.inDataDir/${row.Father}/*_R1*.fastq.gz", checkIfExists: true)
+                def r2 = file("$params.inDataDir/${row.Father}/*_R2*.fastq.gz", checkIfExists: true)
 
                 // Ensure only one file is used for each read
                 if(r1.size() != 1 || r2.size != 1) {
@@ -122,8 +122,8 @@ workflow {
                 // Get family ID ("F" number)
                 def familyID = (sampleID =~ familyRegexPattern).findAll()[0]
 
-                def r1 = file("$params.inDataDir/${row.Child_Affected}/*_R1_*.fastq.gz", checkIfExists: true)
-                def r2 = file("$params.inDataDir/${row.Child_Affected}/*_R2_*.fastq.gz", checkIfExists: true)
+                def r1 = file("$params.inDataDir/${row.Child_Affected}/*_R1*.fastq.gz", checkIfExists: true)
+                def r2 = file("$params.inDataDir/${row.Child_Affected}/*_R2*.fastq.gz", checkIfExists: true)
 
                 // Ensure only one file is used for each read
                 if(r1.size() != 1 || r2.size != 1) {
@@ -139,30 +139,38 @@ workflow {
             .fromPath(params.samplesheet, checkIfExists: true)
             .ifEmpty{exit 1, "No sample sheet found at $params.samplesheet"}
             .splitCsv(header: true, sep: "\t", strip: true)
-            .map{row ->
+            .flatMap{row ->
                 if(row.Other_Members) {
-                    // Get sample ID (letter, 3 or more digits, -, 3 digits, -, letter)
-                    def sampleID = (row.Other_Members =~ sampleRegexPattern).findAll()[0]
 
-                    // Get family ID ("F" number)
-                    def familyID = (sampleID =~ familyRegexPattern).findAll()[0]
+                    def splitRow = row.Other_Members.split(',')*.trim()
 
-                    def r1 = file("$params.inDataDir/${row.Other_Members}/*_R1_*.fastq.gz", checkIfExists: true)
-                    def r2 = file("$params.inDataDir/${row.Other_Members}/*_R2_*.fastq.gz", checkIfExists: true)
+                    def sampleList = []
+                    for(member : splitRow) {
 
-                    // Ensure only one file is used for each read
-                    if(r1.size() != 1 || r2.size != 1) {
-                        error "Incorrect number of file pairs in ${row.Other_Members}"
+                        // Get sample ID (letter, 3 or more digits, -, 3 digits, -, letter)
+                        def sampleID = (member =~ sampleRegexPattern).findAll()[0]
+
+                        // Get family ID ("F" number)
+                        def familyID = (sampleID =~ familyRegexPattern).findAll()[0]
+
+                        def r1 = file("$params.inDataDir/${member}/*_R1*.fastq.gz", checkIfExists: true)
+                        def r2 = file("$params.inDataDir/${member}/*_R2*.fastq.gz", checkIfExists: true)
+
+                        // Ensure only one file is used for each read
+                        if(r1.size() != 1 || r2.size != 1) {
+                            error "Incorrect number of file pairs in ${row.Other_Members}"
+                        }
+
+                        sampleList.add(tuple(familyID, sampleID, r1, r2))
                     }
-
-                    return tuple(familyID, sampleID, r1, r2)
+                    return sampleList
                 }
             }
             .set{read_pairs_other_members}
 
         CALL_VAR_M(read_pairs_mother)
         CALL_VAR_F(read_pairs_father)
-        CALL_VAR_C1(read_pairs_child_affected)
+        CALL_VAR_C(read_pairs_child_affected)
         CALL_VAR_OM(read_pairs_other_members)
     }
 
@@ -244,7 +252,7 @@ workflow {
         if(params.run_variant_calling == true) {
             GENE_FILTERING(CALL_VAR_M.out.rawGVCF,
                             CALL_VAR_F.out.rawGVCF,
-                            CALL_VAR_C1.out.rawGVCF,
+                            CALL_VAR_C.out.rawGVCF,
                             pedigrees)
         }
         else if(params.run_variant_calling == false) {
