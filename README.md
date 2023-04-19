@@ -16,9 +16,15 @@ This pipeline supports running locally, in an interactive session on a HPC, and 
 
 ## Quick Start
 1. Create conda environment from included `environment.yml` file and activate. This just gives us access to the `nextflow` command. Activating the environment is not required for the `submitNextflowRun.sh` command since the script already performs it.
+- For Agave:
     ```bash
     conda env create -f environment.yml
-    conda activate wes_gatk_v2
+    source activate wes_gatk_v2
+    ```
+- For Sol:
+    ```bash
+    mamba env create -f environment.yml
+    source activate wes_gatk_v2
     ```
 2. Install or activate Docker or Singularity
 3. Download this repository
@@ -31,7 +37,9 @@ This pipeline supports running locally, in an interactive session on a HPC, and 
     - If running locally: `nextflow run main.nf -profile local`
     - If running in HPC interactive session: `nextflow run main.nf -profile clusterLocal`
         - Ensure Singularity is loaded `module load singularity/3.8.0`
-    - If running headless on HPC (recommended): `sbatch submitNextflowRun.sh`
+    - If running headless on HPC (recommended): 
+        - Agave: `sbatch submitNextflowRun.sh`
+        - Sol: `sbatch submitNextflowRunSol.sh`
 
 ## Sample sheet format
 The sample sheet is a .tsv file containing a trio on each row. The sample sheet also supports larger families with the other members specified under the `Other_Members` column separated by commas. Each entry contains the directory name that the read pairs are inside of.
