@@ -32,29 +32,31 @@ workflow GENE_FILTERING {
             .join(rawGVCF_father)
             .join(pedigrees)
 
+        annovarRef = Channel.fromPath("${params.resourcesDir}/Annovar/humandb/", checkIfExists: true).collect()
+
         // Combine GVCFs into one GVCF file for the trio and genotype
         COMBINE_AND_GENOTYPE_GVCFS(family_rawGVCF_pedigree, refGenome, refIndex)
 
         // Call denovo SNPs
-        (denovo_snpIntersectVCF, denovo_snpSelectVCF) = DENOVO_SNPS(COMBINE_AND_GENOTYPE_GVCFS.out.genotype, refGenome, refIndex)
+        (denovo_snpIntersectVCF, denovo_snpSelectVCF) = DENOVO_SNPS(COMBINE_AND_GENOTYPE_GVCFS.out.genotype, refGenome, refIndex, annovarRef)
 
         // Call denovo indels
-        (denovo_indelIntersectVCF, denovo_indelSelectVCF) = DENOVO_INDELS(COMBINE_AND_GENOTYPE_GVCFS.out.genotype, refGenome, refIndex)
+        (denovo_indelIntersectVCF, denovo_indelSelectVCF) = DENOVO_INDELS(COMBINE_AND_GENOTYPE_GVCFS.out.genotype, refGenome, refIndex, annovarRef)
 
         // Merge DENOVO_SNPS and DENOVO_INDELS outputs
         denovo_variants = denovo_snpSelectVCF.join(denovo_indelSelectVCF)
 
         // Call homozygous recessive variants
-        HOMOZYGOUS_RECESSIVE(denovo_variants, refGenome, refIndex)
+        HOMOZYGOUS_RECESSIVE(denovo_variants, refGenome, refIndex, annovarRef)
 
         // Call compound heterozygous variants
-        COMPOUND_HETEROZYGOUS(HOMOZYGOUS_RECESSIVE.out.mergedVariantsVCF, refGenome, refIndex)
+        COMPOUND_HETEROZYGOUS(HOMOZYGOUS_RECESSIVE.out.mergedVariantsVCF, refGenome, refIndex, annovarRef)
 
         // Call X-Linked recessive variants
-        X_LINKED_RECESSIVE(HOMOZYGOUS_RECESSIVE.out.mergedVariantsVCF, refGenome, refIndex)
+        X_LINKED_RECESSIVE(HOMOZYGOUS_RECESSIVE.out.mergedVariantsVCF, refGenome, refIndex, annovarRef)
 
         // Call dominant variants
-        DOMINANT(rawGVCF_child, refGenome, refIndex)
+        DOMINANT(rawGVCF_child, refGenome, refIndex, annovarRef)
 
         // Merge variant outputs
         merged_variants = denovo_snpIntersectVCF.join(denovo_indelIntersectVCF)

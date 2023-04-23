@@ -7,6 +7,7 @@ process DENOVO_SNPS {
         tuple val(family), path(pedigree), path(trioRawVCF)
         path refGenome
         path refIndex
+        path annovarRef
 
     output:
         tuple val(family), path(pedigree), path("${family}.snp.denovo.intersect.vcf"), emit: denovoIntersectVCF
@@ -27,7 +28,7 @@ process DENOVO_SNPS {
     less ${family}.snp.select.vcf | perl -lane 'print if /#/; next if ("\$F[$params.childIDX]" =~ /^\\./ || "\$F[$params.motherIDX]" =~ /^\\./ || "\$F[$params.fatherIDX]" =~ /^\\./ || \$F[5] < $params.MAP_QUAL_DEN); \$F[$params.childIDX]=~/,(\\d+):(\\d+):(\\d+)/; next if (\$2 < $params.COV_PROB_DEN) || (\$1 < $params.MAD_PROB_DEN) || (\$2!=0 && \$1 >= $params.MAD_LINE_DEN && \$1/\$2 < $params.MA_FRAC1_PROB_DEN) || (\$2!=0 && \$1 < $params.MAD_LINE_DEN && \$1/\$2 < $params.MA_FRAC2_PROB_DEN); "\$F[$params.motherIDX]"=~/,(\\d+):(\\d+):(\\d+)/;next if (\$2 < $params.COV_PAR_DEN) || (\$2 != 0 && \$1/\$2 > $params.MAD_FRAC_PAR_DEN); "\$F[$params.fatherIDX]"=~ /,(\\d+):(\\d+):(\\d+)/;next if (\$2 < $params.COV_PAR_DEN) || (\$2 != 0 && \$1/\$2 > $params.MAD_FRAC_PAR_DEN); print' > ${family}.snp.hardfilt.vcf 
     
     # Annotate SNPs by Annovar
-    perl \$ANNOVAR/table_annovar.pl ${family}.snp.hardfilt.vcf ${params.resourcesDir}/Annovar/humandb/ -buildver hg38 -out ${family}.snp.hardfilt -remove -protocol refGene,cytoBand,esp6500siv2_all,ALL.sites.2015_08,ljb26_all,exac03,dbnsfp42c,revel,intervar_20180118,cadd16all,bravo_v8,clinvar_20220320,gnomad30_genome -operation g,r,f,f,f,f,f,f,f,f,f,f,f -nastring . -vcfinput
+    perl \$ANNOVAR/table_annovar.pl ${family}.snp.hardfilt.vcf $annovarRef -buildver hg38 -out ${family}.snp.hardfilt -remove -protocol refGene,cytoBand,esp6500siv2_all,ALL.sites.2015_08,ljb26_all,exac03,dbnsfp42c,revel,intervar_20180118,cadd16all,bravo_v8,clinvar_20220320,gnomad30_genome -operation g,r,f,f,f,f,f,f,f,f,f,f,f -nastring . -vcfinput
     
     # Index VCF file of annotated deleterious SNPs
     igvtools index ${family}.snp.hardfilt.hg38_multianno.vcf
@@ -56,6 +57,7 @@ process DENOVO_INDELS {
         tuple val(family), path(pedigree), path(trioRawVCF)
         path refGenome
         path refIndex
+        path annovarRef
 
     output:
         tuple val(family), path("${family}.indel.denovo.intersect.vcf"), emit: denovoIntersectVCF
@@ -76,7 +78,7 @@ process DENOVO_INDELS {
     less ${family}.indel.select.vcf | perl -lane  'print if /#/; next if ("\$F[$params.childIDX]" =~ /^\\./ || "\$F[$params.motherIDX]" =~ /^\\./ || "\$F[$params.fatherIDX]" =~ /^\\./ || \$F[5] < $params.MAP_QUAL_DEN); \$F[$params.childIDX]=~/,(\\d+):(\\d+):(\\d+)/; next if (\$2 < $params.COV_PROB_DEN) || (\$1 < $params.MAD_PROB_DEN) || (\$2!=0 && \$1 >= $params.MAD_LINE_DEN && \$1/\$2 < $params.MA_FRAC1_PROB_DEN) || (\$2!=0 && \$1 < $params.MAD_LINE_DEN && \$1/\$2 < $params.MA_FRAC2_PROB_DEN); "\$F[$params.motherIDX]"=~/,(\\d+):(\\d+):(\\d+)/;next if (\$2 < $params.COV_PAR_DEN) || (\$2 != 0 && \$1/\$2 > $params.MAD_FRAC_PAR_DEN); "\$F[$params.fatherIDX]"=~ /,(\\d+):(\\d+):(\\d+)/;next if (\$2 < $params.COV_PAR_DEN) || (\$2 != 0 && \$1/\$2 > "$params.MAD_FRAC_PAR_DEN"); print'  > ${family}.indel.hardfilt.vcf
 
     # Annotate indels by Annovar
-    perl \$ANNOVAR/table_annovar.pl  ${family}.indel.hardfilt.vcf  ${params.resourcesDir}/Annovar/humandb/  -buildver hg38 -out ${family}.indel.hardfilt -remove -protocol refGene,cytoBand,esp6500siv2_all,ALL.sites.2015_08,ljb26_all,exac03,dbnsfp42c,revel,intervar_20180118,cadd16all,bravo_v8,clinvar_20220320,gnomad30_genome -operation g,r,f,f,f,f,f,f,f,f,f,f,f -nastring . -vcfinput
+    perl \$ANNOVAR/table_annovar.pl  ${family}.indel.hardfilt.vcf  $annovarRef  -buildver hg38 -out ${family}.indel.hardfilt -remove -protocol refGene,cytoBand,esp6500siv2_all,ALL.sites.2015_08,ljb26_all,exac03,dbnsfp42c,revel,intervar_20180118,cadd16all,bravo_v8,clinvar_20220320,gnomad30_genome -operation g,r,f,f,f,f,f,f,f,f,f,f,f -nastring . -vcfinput
 
     # Index the VCF file of annotated deleterious indels
     igvtools index ${family}.indel.hardfilt.hg38_multianno.vcf
@@ -105,6 +107,7 @@ process HOMOZYGOUS_RECESSIVE {
         tuple val(family), path(pedigree), path(snpSelect), path(indelSelect)
         path refGenome
         path refIndex
+        path annovarRef
 
     output:
         tuple val(family), path("${family}.hom.cadd.metasvm.rare.vcf"), emit: homCaddMetaSVMRare
@@ -122,7 +125,7 @@ process HOMOZYGOUS_RECESSIVE {
     less ${family}.hom.vcf | perl -lane 'print if /#/; next if ("\$F[$params.childIDX]" =~ /^\\./ || "\$F[$params.motherIDX]" =~ /^\\./ || "\$F[$params.fatherIDX]" =~ /^\\./ || \$F[5] < $params.MAP_QUAL_REC); "\$F[$params.childIDX]" =~ /,(\\d+):(\\d+):(\\d+)/; next if (\$2 < $params.COV_PROB_REC) || (\$3 < $params.GT_QUAL_REC); print'  > ${family}.hom.filt.vcf
 
     # Annotate HOMs by Annovar
-    perl \$ANNOVAR/table_annovar.pl  ${family}.hom.filt.vcf  ${params.resourcesDir}/Annovar/humandb/  -buildver hg38 -out ${family}.hom -remove -protocol refGene,cytoBand,esp6500siv2_all,ALL.sites.2015_08,ljb26_all,exac03,dbnsfp42c,revel,intervar_20180118,cadd16all,bravo_v8,clinvar_20220320,gnomad30_genome -operation g,r,f,f,f,f,f,f,f,f,f,f,f -nastring . -vcfinput
+    perl \$ANNOVAR/table_annovar.pl  ${family}.hom.filt.vcf  $annovarRef  -buildver hg38 -out ${family}.hom -remove -protocol refGene,cytoBand,esp6500siv2_all,ALL.sites.2015_08,ljb26_all,exac03,dbnsfp42c,revel,intervar_20180118,cadd16all,bravo_v8,clinvar_20220320,gnomad30_genome -operation g,r,f,f,f,f,f,f,f,f,f,f,f -nastring . -vcfinput
 
     # Filter homozygous variants to find MetaSVM deleterious variants
     more ${family}.hom.hg38_multianno.vcf | { egrep 'RadialSVM_pred=D|ExonicFunc.refGene=stop|ExonicFunc.refGene=start|frameshift|deletion|insertion|splicing|#' || true; } | { egrep -v 'Func.refGene=intronic|Func.refGene=UTR3|Func.refGene=UTR5|Func.refGene=intergenic|Func.refGene=ncRNA|Func.refGene=downstream|Func.refGene=upstream' || true; } > ${family}.hom.metasvm.lof.vcf
@@ -163,6 +166,7 @@ process COMPOUND_HETEROZYGOUS {
         tuple val(family), path(mergedVariantsVCF)
         path refGenome
         path refIndex
+        path annovarRef
 
     output:
         tuple val(family), path("${family}.comphet.cadd.metasvm.rare.vcf"), emit: comphetCaddMetaSVMRareVCF
@@ -175,7 +179,7 @@ process COMPOUND_HETEROZYGOUS {
     less $mergedVariantsVCF | perl -lane 'print if /#/; next if ("\$F[$params.childIDX]" =~ /^\\./ || "\$F[$params.motherIDX]" =~ /^\\./ || "\$F[$params.fatherIDX]" =~ /^\\./ || \$F[6] ne "PASS" || \$F[5] < $params.MAP_QUAL_REC); "\$F[$params.childIDX]" =~ /,(\\d+):(\\d+):(\\d+)/; next if (\$2 < $params.COV_PROB_REC) || (\$3 < $params.GT_QUAL_REC); print' > ${family}.merged.filt.vcf
 
     # Annotate the merged filtered VCF file
-    perl \$ANNOVAR/table_annovar.pl  ${family}.merged.filt.vcf  ${params.resourcesDir}/Annovar/humandb/  -buildver hg38 -out ${family}.merged -remove -protocol refGene,cytoBand,esp6500siv2_all,ALL.sites.2015_08,ljb26_all,exac03,dbnsfp42c,revel,intervar_20180118,cadd16all,bravo_v8,clinvar_20220320,gnomad30_genome -operation g,r,f,f,f,f,f,f,f,f,f,f,f -nastring . -vcfinput
+    perl \$ANNOVAR/table_annovar.pl  ${family}.merged.filt.vcf  $annovarRef  -buildver hg38 -out ${family}.merged -remove -protocol refGene,cytoBand,esp6500siv2_all,ALL.sites.2015_08,ljb26_all,exac03,dbnsfp42c,revel,intervar_20180118,cadd16all,bravo_v8,clinvar_20220320,gnomad30_genome -operation g,r,f,f,f,f,f,f,f,f,f,f,f -nastring . -vcfinput
 
     # Select columns: CHR, POS, REF, and gene name
     vcf-query -f '%CHROM:%POS %REF %ALT %INFO/Gene.refGene\\n' ${family}.merged.hg38_multianno.vcf > ${family}.merged.genes.vcf
@@ -232,6 +236,7 @@ process X_LINKED_RECESSIVE {
         tuple val(family), path(mergedVariantsVCF)
         path refGenome
         path refIndex
+        path annovarRef
 
     output:
         tuple val(family), path("${family}.xlink.cadd.metasvm.rare.vcf"), emit: xLinkCaddMetaSVMRareVCF
@@ -245,7 +250,7 @@ process X_LINKED_RECESSIVE {
     less ${family}.xlink.vcf | perl -lane 'print if /#/; next if ("\$F[$params.childIDX]" =~ /^\\./ || "\$F[$params.motherIDX]" =~ /^\\./ || "\$F[$params.fatherIDX]" =~ /^\\./  || \$F[6] ne "PASS" || \$F[5] < $params.MAP_QUAL_REC); "\$F[$params.childIDX]" =~ /,(\\d+):(\\d+):(\\d+)/; next if (\$2 < $params.COV_PROB_REC) || (\$3 < $params.GT_QUAL_REC); print' > ${family}.xlink.filt.vcf
 
     # Annotate X-Linked recessive variants by Annovar
-    perl \$ANNOVAR/table_annovar.pl  ${family}.xlink.filt.vcf  ${params.resourcesDir}/Annovar/humandb/  -buildver hg38 -out ${family}.xlink -remove -protocol refGene,cytoBand,esp6500siv2_all,ALL.sites.2015_08,ljb26_all,exac03,dbnsfp42c,revel,intervar_20180118,cadd16all,bravo_v8,clinvar_20220320,gnomad30_genome -operation g,r,f,f,f,f,f,f,f,f,f,f,f -nastring . -vcfinput
+    perl \$ANNOVAR/table_annovar.pl  ${family}.xlink.filt.vcf  $annovarRef  -buildver hg38 -out ${family}.xlink -remove -protocol refGene,cytoBand,esp6500siv2_all,ALL.sites.2015_08,ljb26_all,exac03,dbnsfp42c,revel,intervar_20180118,cadd16all,bravo_v8,clinvar_20220320,gnomad30_genome -operation g,r,f,f,f,f,f,f,f,f,f,f,f -nastring . -vcfinput
 
     # Filter X-Linked variants to find MetaSVM deleterious variants
     more ${family}.xlink.hg38_multianno.vcf | { egrep 'RadialSVM_pred=D|ExonicFunc.refGene=stop|ExonicFunc.refGene=start|frameshift|deletion|insertion|splicing|#' || true; } | { egrep -v 'Func.refGene=intronic|Func.refGene=UTR3|Func.refGene=UTR5|Func.refGene=intergenic|Func.refGene=ncRNA|Func.refGene=downstream|Func.refGene=upstream' || true; } > ${family}.xlink.metasvm.lof.vcf
@@ -278,6 +283,7 @@ process DOMINANT {
         tuple val(family), path(childRawGVCF)
         path refGenome
         path refIndex
+        path annovarRef
 
     output:
         tuple val(family), path("${family}.dom.cadd.metasvm.rare.vcf"), emit: domCaddMetaSVMRareVCF
@@ -296,7 +302,7 @@ process DOMINANT {
     less ${family}.dom.select.vcf | perl -lane 'print if /#/; next if ("\$F[9]" =~ /^\\./ || \$F[5] < $params.MAP_QUAL_DOM); "\$F[9]" =~ /,(\\d+):(\\d+):(\\d+)/; next if (\$2 < $params.COV_PROB_DOM) || (\$3 < $params.GT_QUAL_DOM) || (\$2!=0 && \$1 >= $params.MAD_LINE_DOM && \$1/\$2 < $params.MA_FRAC1_PROB_DOM) || (\$2!=0 && \$1 < $params.MAD_LINE_DOM && \$1/\$2 < $params.MA_FRAC2_PROB_DOM); print'  > ${family}.dom.filt.vcf
 
     # Annotate dominant variants by Annovar
-    perl \$ANNOVAR/table_annovar.pl ${family}.dom.filt.vcf  ${params.resourcesDir}/Annovar/humandb/  -buildver hg38 -out ${family}.dom -remove -protocol refGene,cytoBand,esp6500siv2_all,ALL.sites.2015_08,ljb26_all,exac03,dbnsfp42c,revel,intervar_20180118,cadd16all,bravo_v8,clinvar_20220320,gnomad30_genome -operation g,r,f,f,f,f,f,f,f,f,f,f,f -nastring . -vcfinput
+    perl \$ANNOVAR/table_annovar.pl ${family}.dom.filt.vcf  $annovarRef  -buildver hg38 -out ${family}.dom -remove -protocol refGene,cytoBand,esp6500siv2_all,ALL.sites.2015_08,ljb26_all,exac03,dbnsfp42c,revel,intervar_20180118,cadd16all,bravo_v8,clinvar_20220320,gnomad30_genome -operation g,r,f,f,f,f,f,f,f,f,f,f,f -nastring . -vcfinput
 
     more ${family}.dom.hg38_multianno.vcf | { egrep 'RadialSVM_pred=D|ExonicFunc.refGene=stop|ExonicFunc.refGene=start|frameshift|deletion|insertion|splicing|#' || true; } | { egrep -v 'Func.refGene=intronic|Func.refGene=UTR3|Func.refGene=UTR5|Func.refGene=intergenic|Func.refGene=ncRNA|Func.refGene=downstream|Func.refGene=upstream|ExonicFunc.refGene=synonymous' || true; } > ${family}.dom.metasvm.lof.vcf
 
