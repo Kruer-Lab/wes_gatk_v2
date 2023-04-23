@@ -38,7 +38,7 @@ This pipeline supports running locally, in an interactive session on a HPC, and 
     - If running in HPC interactive session: `nextflow run main.nf -profile clusterLocal`
         - Ensure Singularity is loaded `module load singularity/3.8.0`
     - If running headless on HPC (recommended): 
-        - Agave: `sbatch submitNextflowRun.sh`
+        - Agave: `sbatch submitNextflowRunAgave.sh`
         - Sol: `sbatch submitNextflowRunSol.sh`
 
 ## Sample sheet format
@@ -71,7 +71,7 @@ Since this pipeline runs off Nextflow, it comes with some nice functionalities s
 
 The `nextflow.config` file is very flexible and it is easy to adjust directory paths and resource allocations. Do not feel limited by the default directory locations. These merely act as a starting point for working with this workflow.
 
-Slurm jobs process settings are specified in the `nextflow.config` file under the `cluster` scope. These may be altered if needed if jobs are failing due to insufficient resource allocations. Jobs are automatically resubmitted with more time allowances which should cover edge cases such as large samples taking an unusually large amount of time.
+Slurm jobs process settings are specified in the `nextflow.config` file under the `clusterAgave` and `clusterSol` scopes. These may be altered if needed if jobs are failing due to insufficient resource allocations. Jobs are automatically resubmitted with more time and memory allowances which should cover edge cases such as large samples taking an unusually large amount of resources and time.
 
 ## Manual resource installation
 1. Install the `gsutil` tool: https://cloud.google.com/storage/docs/gsutil_install
