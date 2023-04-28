@@ -13,17 +13,27 @@ workflow {
     def sampleRegexPattern = ~/F\d{3,}.*-\d{3}.*-[AU]/
     def familyRegexPattern = ~/F\d{3,}/
 
-    // Ensure sample sheet has complete trios
+    // Validate and import samplesheet
     def sheet = file(params.samplesheet, checkIfExists: true).readLines()*.split('\t') // Import sample sheet as .tsv
     sheet.remove(0) // Remove header
 
+    def completeTrios []
+    def incompleteTrios = []
     def sheetFamilies = []
     for(line : sheet) {
-        if(line.size() < 3) {
-            error("ERROR: Sample sheet has incomplete trios.")
-        }
-        sheetFamilies.add((line[0] =~ familyRegexPattern).findAll()[0]) // Get family IDs
+
+        // Get family IDs
+        sheetFamilies.add((line[0] =~ familyRegexPattern).findAll()[0])
+
+        // Check for complete trio
+        if(line contains -001, -002, -003)
+
     }
+
+    // Read sample sheet line by line
+    // If line has mother + father + proband -> complete
+    // Else -> incompleteTrio + check for empty line
+
 
     // Get family IDs for files in pedigree directory
     def pedDir = file(params.pedigreeDir).list()
