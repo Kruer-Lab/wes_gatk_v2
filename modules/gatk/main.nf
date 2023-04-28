@@ -4,8 +4,7 @@ process BQSR {
     publishDir "${params.outDataDir}/${sample}", mode: 'copy'
 
     input:
-        tuple val(family), val(sample), path(dedupBam)
-        tuple val(family), val(sample), path(dedupIndex)
+        tuple val(family), val(sample), path(dedupBam), path(dedupIndex)
         path refGenome
         path refIndex
         path dbSNP

@@ -43,13 +43,14 @@ workflow CALL_VARIANTS {
         SAMTOOLS_INDEX(BWA_MEM.out.sortedBam)
 
         // Replace all read groups with a single new read group and assign all reads to this read group
-        PICARD_ADD_REPLACE_READ_GROUPS(BWA_MEM.out.sortedBam, SAMTOOLS_INDEX.out.index)
+        aligned_indexed = BWA_MEM.out.sortedBam.join(SAMTOOLS_INDEX.out.index, by:[0,1])
+        PICARD_ADD_REPLACE_READ_GROUPS(aligned_indexed)
 
         // Mark duplicates
-        PICARD_MARK_DUPLICATES(PICARD_ADD_REPLACE_READ_GROUPS.out.grpBam, PICARD_ADD_REPLACE_READ_GROUPS.out.index)
+        PICARD_MARK_DUPLICATES(PICARD_ADD_REPLACE_READ_GROUPS.out)
 
         // Base Quality Score Recalibration
-        BQSR(PICARD_MARK_DUPLICATES.out.dedupBam, PICARD_MARK_DUPLICATES.out.index, refGenome, refIndex, dbSNP, dbSNP_index)
+        BQSR(PICARD_MARK_DUPLICATES.out.dedupBam, refGenome, refIndex, dbSNP, dbSNP_index)
 
         // Germline variant calling by HaplotypeCaller
         HAPLOTYPE_CALLER(BQSR.out.bqrecalBam, refGenome, refIndex, intervalList)

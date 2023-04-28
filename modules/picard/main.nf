@@ -2,12 +2,10 @@ process PICARD_ADD_REPLACE_READ_GROUPS {
     label 'picard'
 
     input:
-        tuple val(family), val(sample), path(sortedBam)
-        tuple val(family), val(sample), path(index)
+        tuple val(family), val(sample), path(sortedBam), path(samtoolsIndex)
 
     output:
-        tuple val(family), val(sample), path("${sample}.grp.bam"), emit: grpBam
-        tuple val(family), val(sample), path("${sample}.grp.bam.bai"), emit: index
+        tuple val(family), val(sample), path("${sample}.grp.bam"), path("${sample}.grp.bam.bai")
 
     script:
     // Replace all read groups with a single new read group and assign all reads to this read group
@@ -23,13 +21,11 @@ process PICARD_MARK_DUPLICATES {
     label 'picard'
     
     input:
-        tuple val(family), val(sample), path(grpBam)
-        tuple val(family), val(sample), path(index)
+        tuple val(family), val(sample), path(grpBam), path(index)
     
     output:
         tuple val(family), val(sample), path("${sample}.metrics"), emit: metrics
-        tuple val(family), val(sample), path("${sample}.dedupBam"), emit: dedupBam
-        tuple val(family), val(sample), path("${sample}.dedupBam.bai"), emit: index
+        tuple val(family), val(sample), path("${sample}.dedupBam"), path("${sample}.dedupBam.bai"), emit: dedupBam
 
     script:
     """
