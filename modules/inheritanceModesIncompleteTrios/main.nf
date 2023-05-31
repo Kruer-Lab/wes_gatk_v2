@@ -48,7 +48,6 @@ process HOMOZYGOUS_RECESSIVE_INCOMPLETE {
 
     if [[ \$SEX == 1 ]]; then	
         awk '\$1 != "chrX" {print}' ${family}.hom.cadd.metasvm.rare.00.vcf > temp && mv temp ${family}.hom.cadd.metasvm.rare.vcf
-    fi
     else
         mv ${family}.hom.cadd.metasvm.rare.00.vcf ${family}.hom.cadd.metasvm.rare.vcf
     fi
