@@ -37,7 +37,7 @@ process HAPLOTYPE_CALLER {
         path intervalList
 
     output:
-        tuple val(family), path("${sample}.raw.g.vcf"), emit: rawGVCF
+        tuple val(family), val(sample), path("${sample}.raw.g.vcf"), emit: rawGVCF
 
     script:
     def gatkMemory = task.memory.toString().split()[0]
@@ -65,6 +65,27 @@ process COMBINE_AND_GENOTYPE_GVCFS {
 
     """
     gatk --java-options "-Xmx${gatkMemory}g" CombineGVCFs -R $refGenome --variant $rawGVCF_child --variant $rawGVCF_mother --variant $rawGVCF_father -O "${family}.comb.trio.raw.vcf"
+    gatk --java-options "-Xmx${gatkMemory}g" GenotypeGVCFs -R $refGenome --variant "${family}.comb.trio.raw.vcf" -O "${family}.trio.raw.vcf"
+    """
+
+process COMBINE_AND_GENOTYPE_GVCFS_SINGLE {
+    label = 'medium'
+
+    publishDir "${params.outTrioDir}/${family}", mode: 'copy'
+
+    input:
+        tuple val(family), path(rawGVCF_child), path(pedigree)
+        path refGenome
+        path refIndex
+
+    output:
+        tuple val(family), path(pedigree), path("${family}.trio.raw.vcf"), emit: genotype
+
+    script:
+    def gatkMemory = task.memory.toString().split()[0]
+
+    """
+    gatk --java-options "-Xmx${gatkMemory}g" CombineGVCFs -R $refGenome --variant $rawGVCF_child -O "${family}.comb.trio.raw.vcf"
     gatk --java-options "-Xmx${gatkMemory}g" GenotypeGVCFs -R $refGenome --variant "${family}.comb.trio.raw.vcf" -O "${family}.trio.raw.vcf"
     """
 
