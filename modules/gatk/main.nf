@@ -66,6 +66,7 @@ process COMBINE_AND_GENOTYPE_GVCFS {
     gatk --java-options "-Xmx${gatkMemory}g" CombineGVCFs -R $refGenome --variant $rawGVCF_child --variant $rawGVCF_mother --variant $rawGVCF_father -O "${family}.comb.trio.raw.vcf"
     gatk --java-options "-Xmx${gatkMemory}g" GenotypeGVCFs -R $refGenome --variant "${family}.comb.trio.raw.vcf" -O "${family}.trio.raw.vcf"
     """
+}
 
 process COMBINE_AND_GENOTYPE_GVCFS_SINGLE {
     label = 'medium'
