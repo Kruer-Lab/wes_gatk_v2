@@ -152,7 +152,7 @@ process VARIANTS_TO_TABLE_INCOMPLETE {
     publishDir "${params.outTrioDir}/${family}/Excel_Tables/", mode: 'copy'
 
     input:
-        tuple val(family), path(pedigree), path(hom_recessive_in), path(xlinked_in), path(dominant_in)
+        tuple val(family), path(hom_recessive_in), path(xlinked_in), path(dominant_in)
 
     output:
         path "${family}.hom.cadd.metasvm.rare.csv"
