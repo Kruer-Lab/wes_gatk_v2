@@ -5,7 +5,10 @@ include { CALL_VARIANTS as CALL_VAR_M } from './subworkflows/call_variants'
 include { CALL_VARIANTS as CALL_VAR_F } from './subworkflows/call_variants'
 include { CALL_VARIANTS as CALL_VAR_C } from './subworkflows/call_variants'
 include { CALL_VARIANTS as CALL_VAR_OM } from './subworkflows/call_variants'
-include { GENE_FILTERING } from './subworkflows/gene_filtering'
+include { CALL_VARIANTS as CALL_VAR_IP } from './subworkflows/call_variants'
+include { CALL_VARIANTS as CALL_VAR_IO } from './subworkflows/call_variants'
+include { GENE_FILTERING_COMPLETE } from './subworkflows/gene_filtering'
+include { GENE_FILTERING_INCOMPLETE } from './subworkflows/gene_filtering'
 
 workflow {
 
@@ -17,23 +20,29 @@ workflow {
     def sheet = file(params.samplesheet, checkIfExists: true).readLines()*.split('\t') // Import sample sheet as .tsv
     sheet.remove(0) // Remove header
 
-    def completeTrios []
+    def completeTrios = []
     def incompleteTrios = []
     def sheetFamilies = []
     for(line : sheet) {
 
         // Get family IDs
-        sheetFamilies.add((line[0] =~ familyRegexPattern).findAll()[0])
+        for(element : line) {
+            if(!element.isEmpty()) {
+                sheetFamilies.add((element =~ familyRegexPattern).findAll()[0])
+                break
+            }
+        }
 
-        // Check for complete trio
-        if(line contains -001, -002, -003)
-
+        // Add complete trios
+        if(line.size() >= 3 && line[0].contains("-001") && line[1].contains("-002") && line[2].contains("-003")){
+            completeTrios.add(line)
+        }
+        
+        // Add incomplete trios
+        else {
+            incompleteTrios.add(line)
+        }
     }
-
-    // Read sample sheet line by line
-    // If line has mother + father + proband -> complete
-    // Else -> incompleteTrio + check for empty line
-
 
     // Get family IDs for files in pedigree directory
     def pedDir = file(params.pedigreeDir).list()
@@ -72,20 +81,18 @@ workflow {
     if(params.run_variant_calling == true) {
 
         // Import sample sheet and get reads
-        // Get mother samples
+        // Get mother samples for complete trios
         Channel
-            .fromPath(params.samplesheet, checkIfExists: true)
-            .ifEmpty{exit 1, "No sample sheet found at $params.samplesheet"}
-            .splitCsv(header: true, sep: "\t", strip: true)
+            .fromList(completeTrios)
             .map{row ->
                 // Get sample ID (letter, 3 or more digits, -, 3 digits, -, letter)
-                def sampleID = (row.Mother =~ sampleRegexPattern).findAll()[0]
+                def sampleID = (row[0] =~ sampleRegexPattern).findAll()[0]
 
                 // Get family ID ("F" number)
                 def familyID = (sampleID =~ familyRegexPattern).findAll()[0]
 
-                def r1 = file("$params.inDataDir/${row.Mother}/*_R1*.fastq.gz", checkIfExists: true)
-                def r2 = file("$params.inDataDir/${row.Mother}/*_R2*.fastq.gz", checkIfExists: true)
+                def r1 = file("$params.inDataDir/${row[0]}/*_R1*.fastq.gz", checkIfExists: true)
+                def r2 = file("$params.inDataDir/${row[0]}/*_R2*.fastq.gz", checkIfExists: true)
 
                 // Ensure only one file is used for each read
                 if(r1.size() != 1 || r2.size != 1) {
@@ -96,20 +103,18 @@ workflow {
         }
             .set{read_pairs_mother}
 
-        // Get father samples
+        // Get father samples for complete trios
         Channel
-            .fromPath(params.samplesheet, checkIfExists: true)
-            .ifEmpty{exit 1, "No sample sheet found at $params.samplesheet"}
-            .splitCsv(header: true, sep: "\t", strip: true)
+            .fromList(completeTrios)
             .map{row ->
                 // Get sample ID (letter, 3 or more digits, -, 3 digits, -, letter)
-                def sampleID = (row.Father =~ sampleRegexPattern).findAll()[0]
+                def sampleID = (row[1] =~ sampleRegexPattern).findAll()[0]
 
                 // Get family ID ("F" number)
                 def familyID = (sampleID =~ familyRegexPattern).findAll()[0]
 
-                def r1 = file("$params.inDataDir/${row.Father}/*_R1*.fastq.gz", checkIfExists: true)
-                def r2 = file("$params.inDataDir/${row.Father}/*_R2*.fastq.gz", checkIfExists: true)
+                def r1 = file("$params.inDataDir/${row[1]}/*_R1*.fastq.gz", checkIfExists: true)
+                def r2 = file("$params.inDataDir/${row[1]}/*_R2*.fastq.gz", checkIfExists: true)
 
                 // Ensure only one file is used for each read
                 if(r1.size() != 1 || r2.size != 1) {
@@ -120,20 +125,18 @@ workflow {
             }
             .set{read_pairs_father}
 
-        // Get affected child samples
+        // Get affected child samples for complete trios
         Channel
-            .fromPath(params.samplesheet, checkIfExists: true)
-            .ifEmpty{exit 1, "No sample sheet found at $params.samplesheet"}
-            .splitCsv(header: true, sep: "\t", strip: true)
+            .fromList(completeTrios)
             .map{row ->
                 // Get sample ID (letter, 3 or more digits, -, 3 digits, -, letter)
-                def sampleID = (row.Child_Affected =~ sampleRegexPattern).findAll()[0]
+                def sampleID = (row[2] =~ sampleRegexPattern).findAll()[0]
 
                 // Get family ID ("F" number)
                 def familyID = (sampleID =~ familyRegexPattern).findAll()[0]
 
-                def r1 = file("$params.inDataDir/${row.Child_Affected}/*_R1*.fastq.gz", checkIfExists: true)
-                def r2 = file("$params.inDataDir/${row.Child_Affected}/*_R2*.fastq.gz", checkIfExists: true)
+                def r1 = file("$params.inDataDir/${row[2]}/*_R1*.fastq.gz", checkIfExists: true)
+                def r2 = file("$params.inDataDir/${row[2]}/*_R2*.fastq.gz", checkIfExists: true)
 
                 // Ensure only one file is used for each read
                 if(r1.size() != 1 || r2.size != 1) {
@@ -144,15 +147,13 @@ workflow {
             }
             .set{read_pairs_child_affected}
 
-        // Get other samples in family (if any)
+        // Get other samples in family (if any) for complete trios
         Channel
-            .fromPath(params.samplesheet, checkIfExists: true)
-            .ifEmpty{exit 1, "No sample sheet found at $params.samplesheet"}
-            .splitCsv(header: true, sep: "\t", strip: true)
+            .fromList(completeTrios)
             .flatMap{row ->
-                if(row.Other_Members) {
+                if(row.size() == 4) {
 
-                    def splitRow = row.Other_Members.split(',')*.trim()
+                    def splitRow = row[3].split(',')*.trim()
 
                     def sampleList = []
                     for(member : splitRow) {
@@ -168,7 +169,7 @@ workflow {
 
                         // Ensure only one file is used for each read
                         if(r1.size() != 1 || r2.size != 1) {
-                            error "Incorrect number of file pairs in ${row.Other_Members}"
+                            error "Incorrect number of file pairs in ${row[3]}"
                         }
 
                         sampleList.add(tuple(familyID, sampleID, r1, r2))
@@ -178,23 +179,124 @@ workflow {
             }
             .set{read_pairs_other_members}
 
+        // Get incomplete trio samples
+        Channel
+            .fromList(incompleteTrios)
+            .flatMap{row ->
+
+                    def sampleList = []
+                    for(member : row) {
+                        // Check for multiple samples in element
+                        if(member.contains(',')) {
+                            def splitRow = member.split(',')*.trim()
+
+                            for(splitMember : splitRow) {
+                                
+                                // Get sample ID (letter, 3 or more digits, -, 3 digits, -, letter)
+                                def sampleID = (member =~ sampleRegexPattern).findAll()[0]
+
+                                // Get family ID ("F" number)
+                                def familyID = (sampleID =~ familyRegexPattern).findAll()[0]
+
+                                def r1 = file("$params.inDataDir/${splitMember}/*_R1*.fastq.gz", checkIfExists: true)
+                                def r2 = file("$params.inDataDir/${splitMember}/*_R2*.fastq.gz", checkIfExists: true)
+
+                                // Ensure only one file is used for each read
+                                if(r1.size() != 1 || r2.size != 1) {
+                                    error "Incorrect number of file pairs in ${splitMember}"
+                                }
+
+                                sampleList.add(tuple(familyID, sampleID, r1, r2))
+                            }
+                        }
+                        else if(!member.isEmpty()){
+                            // Get sample ID (letter, 3 or more digits, -, 3 digits, -, letter)
+                            def sampleID = (member =~ sampleRegexPattern).findAll()[0]
+
+                            // Get family ID ("F" number)
+                            def familyID = (sampleID =~ familyRegexPattern).findAll()[0]
+
+                            def r1 = file("$params.inDataDir/${member}/*_R1*.fastq.gz", checkIfExists: true)
+                            def r2 = file("$params.inDataDir/${member}/*_R2*.fastq.gz", checkIfExists: true)
+
+                            // Ensure only one file is used for each read
+                            if(r1.size() != 1 || r2.size != 1) {
+                                error "Incorrect number of file pairs in ${member}"
+                            }
+
+                            sampleList.add(tuple(familyID, sampleID, r1, r2))
+                        }
+                    }
+                    return sampleList
+                }
+            .branch{family, sample, read1, read2 ->
+                proband: sample.contains("-003")
+                other_members: true
+            }
+            .set{incompleteMembers}
+
         CALL_VAR_M(read_pairs_mother)
         CALL_VAR_F(read_pairs_father)
         CALL_VAR_C(read_pairs_child_affected)
         CALL_VAR_OM(read_pairs_other_members)
+        CALL_VAR_IP(incompleteMembers.proband)
+        CALL_VAR_IO(incompleteMembers.other_members)
     }
 
     // Skipping variant calling
     else if(params.run_variant_calling == false && params.run_variant_filtering == true) {
 
-        // Get mother gvcf
+        // Get complete trio gvcf
         Channel
-            .fromPath(params.samplesheet, checkIfExists: true)
-            .ifEmpty{exit 1, "No sample sheet found at $params.samplesheet"}
-            .splitCsv(header: true, sep: "\t", strip: true)
+            .fromList(completeTrios)
+            .flatMap{row ->
+
+                def gvcfList = []
+                for(member : row) {
+                // Check for multiple samples in element
+                    if(member.contains(',')) {
+                        def splitRow = member.split(',')*.trim()
+
+                        for(splitMember : splitRow) {
+                                
+                            // Get sample ID (letter, 3 or more digits, -, 3 digits, -, letter)
+                            def sampleID = (member =~ sampleRegexPattern).findAll()[0]
+
+                            // Get family ID ("F" number)
+                            def familyID = (sampleID =~ familyRegexPattern).findAll()[0]
+
+                            def gvcf = file("$params.outDataDir/$sampleID/${sampleID}.raw.g.vcf", checkIfExists: true)
+
+                            gvcfList.add(tuple(familyID, gvcf))
+                        }
+                    }
+                    else if(!member.isEmpty()){
+                        // Get sample ID (letter, 3 or more digits, -, 3 digits, -, letter)
+                        def sampleID = (member =~ sampleRegexPattern).findAll()[0]
+
+                        // Get family ID ("F" number)
+                        def familyID = (sampleID =~ familyRegexPattern).findAll()[0]
+
+                        def gvcf = file("$params.outDataDir/$sampleID/${sampleID}.raw.g.vcf", checkIfExists: true)
+
+                        gvcfList.add(tuple(familyID, gvcf))
+                    }
+                }
+                return gvcfList
+            }
+            .branch{family, sample, gvcf ->
+                mother: sample.contains("-001")
+                father: sample.contains("-002")
+                proband: sample.contains("-003")
+            }
+            .set{completeGVCFs}
+
+        // Get incomplete trio gvcf
+        Channel
+            .fromList(incompleteTrios)
             .map{row ->
                 // Get sample ID (letter, 3 or more digits, -, 3 digits, -, letter)
-                def sampleID = (row.Mother =~ sampleRegexPattern).findAll()[0]
+                def sampleID = (row[2] =~ sampleRegexPattern).findAll()[0]
 
                 // Get family ID ("F" number)
                 def familyID = (sampleID =~ familyRegexPattern).findAll()[0]
@@ -203,44 +305,7 @@ workflow {
 
                 return tuple(familyID, gvcf)
             }
-            .set{mother_calls}
-
-        // Get father gvcf
-        Channel
-            .fromPath(params.samplesheet, checkIfExists: true)
-            .ifEmpty{exit 1, "No sample sheet found at $params.samplesheet"}
-            .splitCsv(header: true, sep: "\t", strip: true)
-            .map{row ->
-                // Get sample ID (letter, 3 or more digits, -, 3 digits, -, letter)
-                def sampleID = (row.Father =~ sampleRegexPattern).findAll()[0]
-
-                // Get family ID ("F" number)
-                def familyID = (sampleID =~ familyRegexPattern).findAll()[0]
-
-                def gvcf = file("$params.outDataDir/$sampleID/${sampleID}.raw.g.vcf", checkIfExists: true)
-
-                return tuple(familyID, gvcf)
-            }
-            .set{father_calls}
-
-        // Get affected child gvcf
-        Channel
-            .fromPath(params.samplesheet, checkIfExists: true)
-            .ifEmpty{exit 1, "No sample sheet found at $params.samplesheet"}
-            .splitCsv(header: true, sep: "\t", strip: true)
-            .map{row ->
-                // Get sample ID (letter, 3 or more digits, -, 3 digits, -, letter)
-                def sampleID = (row.Child_Affected =~ sampleRegexPattern).findAll()[0]
-
-                // Get family ID ("F" number)
-                def familyID = (sampleID =~ familyRegexPattern).findAll()[0]
-
-                def gvcf = file("$params.outDataDir/$sampleID/${sampleID}.raw.g.vcf", checkIfExists: true)
-
-                return tuple(familyID, gvcf)
-            }
-            .set{proband_calls}
-
+            .set{incompleteGVCFs}
     }
 
     // Variant filtration
@@ -260,16 +325,26 @@ workflow {
         .set{pedigrees}
 
         if(params.run_variant_calling == true) {
-            GENE_FILTERING(CALL_VAR_M.out.rawGVCF,
+            GENE_FILTERING_COMPLETE(CALL_VAR_M.out.rawGVCF,
                             CALL_VAR_F.out.rawGVCF,
                             CALL_VAR_C.out.rawGVCF,
                             pedigrees)
+
+            GENE_FILTERING_INCOMPLETE(null,
+                            null,
+                            CALL_VAR_IP.out.rawGVCF,
+                            pedigrees)
         }
         else if(params.run_variant_calling == false) {
-            GENE_FILTERING(mother_calls,
-                father_calls,
-                proband_calls,
+            GENE_FILTERING_COMPLETE(completeGVCFs.mother,
+                completeGVCFs.father,
+                completeGVCFs.proband,
                 pedigrees)
+
+            GENE_FILTERING_INCOMPLETE(null,
+                            null,
+                            incompleteGVCFs,
+                            pedigrees)
         }
     }
 }
