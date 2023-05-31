@@ -77,7 +77,7 @@ process X_LINKED_RECESSIVE {
     less ${family}.trio.raw.vcf | perl -lane 'print if /#/; next if \$F[0] ne "chrX";"\$F[9]" =~ /(\\d+)\\/(\\d+):/; next if \$1!=\$2 || \$1==0; print' > ${family}.xlink.vcf
 
     # Apply filters on mapping and GT quality, and coverage and make sure the genotype is valid
-    less ${family}.xlink.vcf | perl -lane 'print if /#/; next if ("\$F[9]" =~ /^\./ || \$F[5] < $params.MAP_QUAL_REC); "\$F[9]" =~ /,(\\d+):(\\d+):(\\d+)/; next if (\$2 < $params.COV_PROB_REC) || (\$3 < $params.GT_QUAL_REC); print' > ${family}.xlink.filt.vcf
+    less ${family}.xlink.vcf | perl -lane 'print if /#/; next if ("\$F[9]" =~ /^\\./ || \$F[5] < $params.MAP_QUAL_REC); "\$F[9]" =~ /,(\\d+):(\\d+):(\\d+)/; next if (\$2 < $params.COV_PROB_REC) || (\$3 < $params.GT_QUAL_REC); print' > ${family}.xlink.filt.vcf
 
     # Annotate x-linked recessive variants by Annovar
     perl \$ANNOVAR/table_annovar.pl  ${family}.xlink.filt.vcf  $annovarRef  -buildver hg38 -out ${family}.xlink -remove -protocol refGene,cytoBand,esp6500siv2_all,ALL.sites.2015_08,ljb26_all,exac03,dbnsfp42c,revel,intervar_20180118,cadd16all,bravo_v8,clinvar_20220320,gnomad30_genome -operation g,r,f,f,f,f,f,f,f,f,f,f,f -nastring . -vcfinput
