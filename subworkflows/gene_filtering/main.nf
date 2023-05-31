@@ -14,10 +14,10 @@ include { VARIANTS_TO_TABLE } from '../../modules/inheritanceModes'
 include { KINSHIP } from '../../modules/kinship'
 
 include { COMBINE_AND_GENOTYPE_GVCFS_SINGLE } from '../../modules/gatk'
-include { HOMOZYGOUS_RECESSIVE as HOMOZYGOUS_RECESSIVE_INCOMPLETE } from '../../modules/inheritanceModesIncompleteTrios'
-include { X_LINKED_RECESSIVE as X_LINKED_RECESSIVE_INCOMPLETE } from '../../modules/inheritanceModesIncompleteTrios'
-include { DOMINANT as DOMINANT_INCOMPLETE } from '../../modules/inheritanceModesIncompleteTrios'
-include { VARIANTS_TO_TABLE as VARIANTS_TO_TABLE_INCOMPLETE } from '../../modules/inheritanceModesIncompleteTrios'
+include { HOMOZYGOUS_RECESSIVE_INCOMPLETE } from '../../modules/inheritanceModesIncompleteTrios'
+include { X_LINKED_RECESSIVE_INCOMPLETE } from '../../modules/inheritanceModesIncompleteTrios'
+include { DOMINANT_INCOMPLETE } from '../../modules/inheritanceModesIncompleteTrios'
+include { VARIANTS_TO_TABLE_INCOMPLETE } from '../../modules/inheritanceModesIncompleteTrios'
 
 
 

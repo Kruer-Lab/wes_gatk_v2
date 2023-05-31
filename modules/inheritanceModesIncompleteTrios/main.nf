@@ -1,4 +1,4 @@
-process HOMOZYGOUS_RECESSIVE {
+process HOMOZYGOUS_RECESSIVE_INCOMPLETE {
     label = 'short'
 
     publishDir "${params.outTrioDir}/${family}", pattern: "*.hom.cadd.metasvm.rare.vcf", mode: 'copy'
@@ -55,7 +55,7 @@ process HOMOZYGOUS_RECESSIVE {
     """
 }
 
-process X_LINKED_RECESSIVE {
+process X_LINKED_RECESSIVE_INCOMPLETE {
     label = 'short'
 
     publishDir "${params.outTrioDir}/${family}", pattern: "*.xlink.cadd.metasvm.rare.vcf", mode: 'copy'
@@ -102,7 +102,7 @@ process X_LINKED_RECESSIVE {
     """
 }
 
-process DOMINANT {
+process DOMINANT_INCOMPLETE {
     label = 'long'
 
     publishDir "${params.outTrioDir}/${family}", pattern: "*.dom.cadd.metasvm.rare.vcf", mode: 'copy'
@@ -147,7 +147,7 @@ process DOMINANT {
     """
 }
 
-process VARIANTS_TO_TABLE {
+process VARIANTS_TO_TABLE_INCOMPLETE {
     label = 'short'
 
     publishDir "${params.outTrioDir}/${family}/Excel_Tables/", mode: 'copy'
