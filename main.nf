@@ -7,8 +7,8 @@ include { CALL_VARIANTS as CALL_VAR_C } from './subworkflows/call_variants'
 include { CALL_VARIANTS as CALL_VAR_OM } from './subworkflows/call_variants'
 include { CALL_VARIANTS as CALL_VAR_IP } from './subworkflows/call_variants'
 include { CALL_VARIANTS as CALL_VAR_IO } from './subworkflows/call_variants'
-include { GENE_FILTERING_COMPLETE } from './subworkflows/gene_filtering'
-include { GENE_FILTERING_INCOMPLETE } from './subworkflows/gene_filtering'
+include { GENE_FILTERING as GENE_FILTERING_COMPLETE } from './subworkflows/gene_filtering'
+include { GENE_FILTERING as GENE_FILTERING_INCOMPLETE } from './subworkflows/gene_filtering'
 
 workflow {
 
