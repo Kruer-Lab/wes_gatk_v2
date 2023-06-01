@@ -37,6 +37,7 @@ process HAPLOTYPE_CALLER {
 
     output:
         tuple val(family), val(sample), path("${sample}.raw.g.vcf"), emit: rawGVCF
+        tuple val(family), val(sample), path("${sample}.raw.g.vcf.idx"), emit: rawGVFIdx
 
     script:
     def gatkMemory = task.memory.toString().split()[0]
