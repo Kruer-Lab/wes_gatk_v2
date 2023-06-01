@@ -267,7 +267,7 @@ workflow {
 
                             def gvcf = file("$params.outDataDir/$sampleID/${sampleID}.raw.g.vcf", checkIfExists: true)
 
-                            gvcfList.add(tuple(familyID, gvcf))
+                            gvcfList.add(tuple(familyID, sampleID, gvcf))
                         }
                     }
                     else if(!member.isEmpty()){
@@ -279,7 +279,7 @@ workflow {
 
                         def gvcf = file("$params.outDataDir/$sampleID/${sampleID}.raw.g.vcf", checkIfExists: true)
 
-                        gvcfList.add(tuple(familyID, gvcf))
+                        gvcfList.add(tuple(familyID, sampleID, gvcf))
                     }
                 }
                 return gvcfList
