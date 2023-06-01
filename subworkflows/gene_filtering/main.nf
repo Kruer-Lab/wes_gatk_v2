@@ -39,7 +39,7 @@ workflow GENE_FILTERING {
 
         // Incomplete trio
         if(rawGVCF_mother == null && rawGVCF_father == null) {
-            subsetChild = rawGVCF_child.map{fam, sample, gvcf ->
+            subsetChild = rawGVCF_child.map{fam, gvcf ->
                                             tuple(fam, gvcf)}
             
             // Join gvcf with pedigree
