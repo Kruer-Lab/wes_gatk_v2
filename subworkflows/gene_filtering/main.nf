@@ -99,7 +99,7 @@ workflow GENE_FILTERING {
             X_LINKED_RECESSIVE(HOMOZYGOUS_RECESSIVE.out.mergedVariantsVCF, refGenome, refIndex, annovarRef)
 
             // Call dominant variants
-            DOMINANT(rawGVCF_child, refGenome, refIndex, annovarRef)
+            DOMINANT(subsetChild, refGenome, refIndex, annovarRef)
 
             // Merge variant outputs
             merged_variants = denovo_snpIntersectVCF.join(denovo_indelIntersectVCF)
