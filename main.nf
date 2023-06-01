@@ -193,7 +193,7 @@ workflow {
                             for(splitMember : splitRow) {
                                 
                                 // Get sample ID (letter, 3 or more digits, -, 3 digits, -, letter)
-                                def sampleID = (member =~ sampleRegexPattern).findAll()[0]
+                                def sampleID = (splitMember =~ sampleRegexPattern).findAll()[0]
 
                                 // Get family ID ("F" number)
                                 def familyID = (sampleID =~ familyRegexPattern).findAll()[0]
@@ -260,7 +260,7 @@ workflow {
                         for(splitMember : splitRow) {
                                 
                             // Get sample ID (letter, 3 or more digits, -, 3 digits, -, letter)
-                            def sampleID = (member =~ sampleRegexPattern).findAll()[0]
+                            def sampleID = (splitMember =~ sampleRegexPattern).findAll()[0]
 
                             // Get family ID ("F" number)
                             def familyID = (sampleID =~ familyRegexPattern).findAll()[0]
