@@ -295,15 +295,17 @@ workflow {
         Channel
             .fromList(incompleteTrios)
             .map{row ->
-                // Get sample ID (letter, 3 or more digits, -, 3 digits, -, letter)
-                def sampleID = (row[2] =~ sampleRegexPattern).findAll()[0]
+                if(!row[2].isEmpty()) {
+                    // Get sample ID (letter, 3 or more digits, -, 3 digits, -, letter)
+                    def sampleID = (row[2] =~ sampleRegexPattern).findAll()[0]
 
-                // Get family ID ("F" number)
-                def familyID = (sampleID =~ familyRegexPattern).findAll()[0]
+                    // Get family ID ("F" number)
+                    def familyID = (sampleID =~ familyRegexPattern).findAll()[0]
 
-                def gvcf = file("$params.outDataDir/$sampleID/${sampleID}.raw.g.vcf", checkIfExists: true)
+                    def gvcf = file("$params.outDataDir/$sampleID/${sampleID}.raw.g.vcf", checkIfExists: true)
 
-                return tuple(familyID, gvcf)
+                    return tuple(familyID, gvcf)
+                }
             }
             .set{incompleteGVCFs}
     }
