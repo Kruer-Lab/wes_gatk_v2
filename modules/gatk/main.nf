@@ -43,7 +43,7 @@ process HAPLOTYPE_CALLER {
     def gatkMemory = task.memory.toString().split()[0]
 
     """
-    gatk --java-options "-Xmx${gatkMemory}g" HaplotypeCaller -R "${refGenome}" -I "${bqrecalBam}" -ERC BP_RESOLUTION  -L "${intervalList}" -O "${sample}.raw.g.vcf"
+    gatk --java-options "-Xmx${gatkMemory}g" HaplotypeCaller -R "${refGenome}" -I "${bqrecalBam}" -ERC BP_RESOLUTION --do-not-run-physical-phasing true -L "${intervalList}" -O "${sample}.raw.g.vcf"
     """
 }
 

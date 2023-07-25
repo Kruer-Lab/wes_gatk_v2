@@ -1,5 +1,5 @@
 process HOMOZYGOUS_RECESSIVE_INCOMPLETE {
-    label = 'short'
+    label = 'medium'
 
     publishDir "${params.outTrioDir}/${family}", pattern: "*.hom.cadd.metasvm.rare.vcf", mode: 'copy'
 

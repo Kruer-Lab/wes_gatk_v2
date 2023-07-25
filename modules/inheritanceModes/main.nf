@@ -99,7 +99,7 @@ process DENOVO_INDELS {
 }
 
 process HOMOZYGOUS_RECESSIVE {
-    label = 'short'
+    label = 'medium'
 
     publishDir "${params.outTrioDir}/${family}", pattern: "*.hom.cadd.metasvm.rare.vcf", mode: 'copy'
 
