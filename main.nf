@@ -34,7 +34,7 @@ workflow {
         }
 
         // Add complete trios
-        if(line.size() >= 3 && line[0].contains("-001") && line[1].contains("-002") && line[2].contains("-003")){
+        if(line.size() >= 3 && line[0] && line[1] && line[2]){
             completeTrios.add(line)
         }
         
@@ -99,7 +99,7 @@ workflow {
                     error "Incorrect number of file pairs in ${row.Mother}"
                 }
 
-            return tuple(familyID, sampleID, r1, r2)
+            return tuple(familyID, sampleID, r1, r2, false)
         }
             .set{read_pairs_mother}
 
@@ -121,7 +121,7 @@ workflow {
                     error "Incorrect number of file pairs in ${row.Father}"
                 }
 
-                return tuple(familyID, sampleID, r1, r2)
+                return tuple(familyID, sampleID, r1, r2, false)
             }
             .set{read_pairs_father}
 
@@ -143,7 +143,7 @@ workflow {
                     error "Incorrect number of file pairs in ${row.Child_Affected}"
                 }
 
-                return tuple(familyID, sampleID, r1, r2)
+                return tuple(familyID, sampleID, r1, r2, true)
             }
             .set{read_pairs_child_affected}
 
@@ -172,7 +172,7 @@ workflow {
                             error "Incorrect number of file pairs in ${row[3]}"
                         }
 
-                        sampleList.add(tuple(familyID, sampleID, r1, r2))
+                        sampleList.add(tuple(familyID, sampleID, r1, r2, false))
                     }
                     return sampleList
                 }
@@ -206,9 +206,28 @@ workflow {
                                     error "Incorrect number of file pairs in ${splitMember}"
                                 }
 
-                                sampleList.add(tuple(familyID, sampleID, r1, r2))
+                                sampleList.add(tuple(familyID, sampleID, r1, r2, false))
                             }
                         }
+                        
+                        else if(row.findIndexOf {it == member} == 2 && !member.isEmpty()){
+                            // Get sample ID (letter, 3 or more digits, -, 3 digits, -, letter)
+                            def sampleID = (member =~ sampleRegexPattern).findAll()[0]
+
+                            // Get family ID ("F" number)
+                            def familyID = (sampleID =~ familyRegexPattern).findAll()[0]
+
+                            def r1 = file("$params.inDataDir/${member}/*_R1*.fastq.gz", checkIfExists: true)
+                            def r2 = file("$params.inDataDir/${member}/*_R2*.fastq.gz", checkIfExists: true)
+
+                            // Ensure only one file is used for each read
+                            if(r1.size() != 1 || r2.size != 1) {
+                                error "Incorrect number of file pairs in ${member}"
+                            }
+
+                            sampleList.add(tuple(familyID, sampleID, r1, r2, true))
+                        }
+
                         else if(!member.isEmpty()){
                             // Get sample ID (letter, 3 or more digits, -, 3 digits, -, letter)
                             def sampleID = (member =~ sampleRegexPattern).findAll()[0]
@@ -224,13 +243,13 @@ workflow {
                                 error "Incorrect number of file pairs in ${member}"
                             }
 
-                            sampleList.add(tuple(familyID, sampleID, r1, r2))
+                            sampleList.add(tuple(familyID, sampleID, r1, r2, false))
                         }
                     }
                     return sampleList
                 }
-            .branch{family, sample, read1, read2 ->
-                proband: sample.contains("-003")
+            .branch{family, sample, read1, read2, probandStatus ->
+                proband: probandStatus == true
                 other_members: true
             }
             .set{incompleteMembers}
@@ -267,9 +286,21 @@ workflow {
 
                             def gvcf = file("$params.outDataDir/$sampleID/${sampleID}.raw.g.vcf", checkIfExists: true)
 
-                            gvcfList.add(tuple(familyID, sampleID, gvcf))
+                            gvcfList.add(tuple(familyID, sampleID, gvcf, false))
                         }
                     }
+                    else if(row.findIndexOf {it == member} == 2 && !member.isEmpty()){
+                        // Get sample ID (letter, 3 or more digits, -, 3 digits, -, letter)
+                        def sampleID = (member =~ sampleRegexPattern).findAll()[0]
+
+                        // Get family ID ("F" number)
+                        def familyID = (sampleID =~ familyRegexPattern).findAll()[0]
+
+                        def gvcf = file("$params.outDataDir/$sampleID/${sampleID}.raw.g.vcf", checkIfExists: true)
+
+                        gvcfList.add(tuple(familyID, sampleID, gvcf, true))
+                    }
+
                     else if(!member.isEmpty()){
                         // Get sample ID (letter, 3 or more digits, -, 3 digits, -, letter)
                         def sampleID = (member =~ sampleRegexPattern).findAll()[0]
@@ -279,15 +310,15 @@ workflow {
 
                         def gvcf = file("$params.outDataDir/$sampleID/${sampleID}.raw.g.vcf", checkIfExists: true)
 
-                        gvcfList.add(tuple(familyID, sampleID, gvcf))
+                        gvcfList.add(tuple(familyID, sampleID, gvcf, false))
                     }
                 }
                 return gvcfList
             }
-            .branch{family, sample, gvcf ->
+            .branch{family, sample, gvcf, probandStatus ->
                 mother: sample.contains("-001")
                 father: sample.contains("-002")
-                proband: sample.contains("-003")
+                proband: probandStatus == true
             }
             .set{completeGVCFs}
 
